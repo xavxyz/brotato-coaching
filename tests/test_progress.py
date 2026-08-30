@@ -28,6 +28,12 @@ DEATH_CAUSE_COUNT = 15
 DEATH_TOTAL = 24
 PURCHASED_ITEM_COUNT = 260
 
+# A second save directory, for the tests about choosing between saves. Built
+# rather than written out, because a 17-digit literal in a tracked file is the
+# exact thing `test_no_steam_id.py` exists to reject — including when it is
+# obviously fake.
+ANOTHER_STEAM_ID = "1" * 17
+
 
 def _character(report: dict, character_id: str) -> dict:
     for character in report["characters"]:
@@ -153,7 +159,7 @@ def test_no_steam_id_reaches_the_output(cli: CliRunner, real_save_root: Path) ->
 def test_the_steam_id_in_the_environment_picks_the_save_directory(
     cli: CliRunner, real_save_root: Path
 ) -> None:
-    _write_save(real_save_root / "11111111111111111", _empty_save_document())
+    _write_save(real_save_root / ANOTHER_STEAM_ID, _empty_save_document())
     report = cli(
         "progress", application_support=real_save_root, steam_id=PLACEHOLDER_STEAM_ID
     ).json()
@@ -163,7 +169,7 @@ def test_the_steam_id_in_the_environment_picks_the_save_directory(
 def test_the_steam_id_in_dot_env_picks_the_save_directory(
     cli: CliRunner, real_save_root: Path, tmp_path: Path
 ) -> None:
-    _write_save(real_save_root / "11111111111111111", _empty_save_document())
+    _write_save(real_save_root / ANOTHER_STEAM_ID, _empty_save_document())
     working_directory = tmp_path / "work"
     working_directory.mkdir()
     (working_directory / ".env").write_text(
@@ -182,10 +188,10 @@ def test_without_a_steam_id_the_save_directory_is_found_by_globbing(
     assert report["lifetime"]["runs_started"] == RUNS_STARTED
 
 
-def test_the_offline_profile_does_not_shadow_the_steam_save(
+def test_the_offline_save_does_not_shadow_the_steam_save(
     cli: CliRunner, real_save_root: Path
 ) -> None:
-    """Brotato writes an empty `user/` profile beside the Steam one.
+    """Brotato writes an empty `user/` save beside the Steam one.
 
     Every real install has both, so globbing that stopped at "two saves, which
     one?" would never once find the save it was written to find.
@@ -198,14 +204,14 @@ def test_the_offline_profile_does_not_shadow_the_steam_save(
 def test_several_steam_saves_and_no_steam_id_asks_for_one(
     cli: CliRunner, real_save_root: Path
 ) -> None:
-    _write_save(real_save_root / "11111111111111111", _empty_save_document())
+    _write_save(real_save_root / ANOTHER_STEAM_ID, _empty_save_document())
     result = cli("progress", application_support=real_save_root)
     assert result.exit_code != 0
     assert "STEAM_ID" in result.stderr
     assert "Traceback" not in result.stderr
 
 
-def test_only_an_offline_profile_is_still_a_save_worth_reading(
+def test_only_an_offline_save_is_still_worth_reading(
     cli: CliRunner, save_root: Path
 ) -> None:
     _write_save(save_root / "user", _empty_save_document())
@@ -236,7 +242,7 @@ def test_a_steam_id_naming_a_directory_without_a_save_is_explained(
     cli: CliRunner, real_save_root: Path
 ) -> None:
     result = cli(
-        "progress", application_support=real_save_root, steam_id="11111111111111111"
+        "progress", application_support=real_save_root, steam_id=ANOTHER_STEAM_ID
     )
     assert result.exit_code != 0
     assert "Traceback" not in result.stderr

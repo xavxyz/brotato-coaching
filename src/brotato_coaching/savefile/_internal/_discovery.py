@@ -44,10 +44,10 @@ def _application_support() -> Path:
     return root.expanduser()
 
 
-def _steam_saves_first(found: list[Path]) -> list[Path]:
+def _prefer_steam_saves(found: list[Path]) -> list[Path]:
     """The Steam saves, if there are any, else whatever was found.
 
-    Brotato writes an empty `user/` profile beside the Steam one, so every real
+    Brotato writes an empty `user/` save beside the Steam one, so every real
     install has at least two saves and "which of these did you mean?" would be
     the answer every single time. A Steam save sits in a directory named after
     a Steam ID, which is all digits; `user` is not, and loses to it.
@@ -79,7 +79,7 @@ def find_save_file() -> Path:
             )
         return candidate
 
-    found = _steam_saves_first(sorted(root.glob(f"*/{SAVE_FILENAME}")))
+    found = _prefer_steam_saves(sorted(root.glob(f"*/{SAVE_FILENAME}")))
     if not found:
         raise SaveUnavailable(
             f"No Brotato save under {root}. "

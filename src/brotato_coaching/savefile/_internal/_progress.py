@@ -34,6 +34,13 @@ class ZoneProgress:
     def cleared(self) -> bool:
         return self.max_danger_beaten is not None
 
+    def as_json_object(self) -> dict[str, Any]:
+        return {
+            "zone_id": self.zone_id,
+            "max_danger_beaten": self.max_danger_beaten,
+            "max_wave_reached": self.max_wave_reached,
+        }
+
 
 @dataclass(frozen=True)
 class CharacterProgress:
@@ -46,6 +53,13 @@ class CharacterProgress:
     def cleared(self) -> bool:
         """Whether this character has ever been cleared, in any zone."""
         return any(zone.cleared for zone in self.zones)
+
+    def as_json_object(self) -> dict[str, Any]:
+        return {
+            "character_id": self.character_id,
+            "cleared": self.cleared,
+            "zones": [zone.as_json_object() for zone in self.zones],
+        }
 
 
 @dataclass(frozen=True)
