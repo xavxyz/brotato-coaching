@@ -3,10 +3,10 @@
 Reach **Danger 5 solo on every archetype**, in the base game and in Abyssal Terrors, by
 deriving a plan for a character I have never played rather than recalling one.
 
-The measure is derivation, not results. A win recalled from a build guide teaches nothing; a
-lost run whose plan I derived correctly and executed badly teaches a lot. This workspace is
-working if my predictions get better, so prediction hit rate — not win count — is the number
-it tracks over time.
+The measure is derivation, not results. A win recalled from a memorised build list teaches
+nothing; a lost run whose plan I derived correctly and executed badly teaches a lot. This
+workspace is working if my predictions get better, so prediction hit rate — not win count —
+is the number it tracks over time.
 
 ## The demonstrated ceiling
 
@@ -52,8 +52,10 @@ Every lesson in this workspace is judged against whether it moves one of those t
   progress is tracked per zone.
 - **Platform**: PC / Steam on macOS. Save data and game data are read from the macOS paths
   only; no other platform is supported.
-- **Patch stamp**: **Brotato 1.1.12.0**, Steam build `23429717`, read from the installed
-  application bundle on 2026-08-30.
+- **Patch stamp**: **Brotato 1.1.12.0.beta-3**, Steam build `23429717`, read from the
+  installed application bundle on 2026-08-30. The installed build is a beta, and the stamp
+  says so — a claim checked against a beta may not survive the stable release of the same
+  version.
 - **Out of scope**: co-op, mods, and anything that reduces to a build list rather than to the
   underlying model.
 

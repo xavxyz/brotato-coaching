@@ -18,20 +18,27 @@
 
 /* ---------------------------------------------------------------- theme tokens */
 
+/* Both palettes live here once, as light-dark() pairs. The used value follows the element's
+   color-scheme: the system's by default, or whichever one data-theme pins below. */
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
 
-  --bg: #fbfaf7;
-  --bg-raised: #ffffff;
-  --bg-sunken: #f1efe9;
-  --ink: #1d1c1a;
-  --ink-muted: #5d5a53;
-  --ink-faint: #8b877e;
-  --rule: #ddd8cd;
-  --accent: #a8442a;
-  --accent-ink: #ffffff;
-  --accent-wash: #f7e8e2;
-  --shadow: 0 1px 2px rgb(29 28 26 / 8%), 0 4px 16px rgb(29 28 26 / 6%);
+  --bg: light-dark(#fbfaf7, #16161a);
+  --bg-raised: light-dark(#ffffff, #1f1f25);
+  --bg-sunken: light-dark(#f1efe9, #111114);
+  --ink: light-dark(#1d1c1a, #eceae5);
+  --ink-muted: light-dark(#5d5a53, #a9a59d);
+  --ink-faint: light-dark(#8b877e, #7b7770);
+  --rule: light-dark(#ddd8cd, #33333c);
+  --accent: light-dark(#a8442a, #e8895f);
+  --accent-wash: light-dark(#f7e8e2, #2a2028);
+  --shadow: light-dark(
+    0 1px 2px rgb(29 28 26 / 8%),
+    0 1px 2px rgb(0 0 0 / 40%)
+  ), light-dark(
+    0 4px 16px rgb(29 28 26 / 6%),
+    0 4px 16px rgb(0 0 0 / 30%)
+  );
 
   --measure: 34rem;
   --gutter: 1.5rem;
@@ -42,40 +49,14 @@
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
-
-  --bg: #16161a;
-  --bg-raised: #1f1f25;
-  --bg-sunken: #111114;
-  --ink: #eceae5;
-  --ink-muted: #a9a59d;
-  --ink-faint: #7b7770;
-  --rule: #33333c;
-  --accent: #e8895f;
-  --accent-ink: #16161a;
-  --accent-wash: #2a2028;
-  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 16px rgb(0 0 0 / 30%);
+/* lesson.js sets data-theme once the reader has made a choice; until then there is no
+   attribute and the system preference decides. */
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
-/* System preference, for the first visit before the toggle has ever been used.
-   lesson.js writes data-theme="light" explicitly, so an explicit light choice wins. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
-    color-scheme: dark;
-
-    --bg: #16161a;
-    --bg-raised: #1f1f25;
-    --bg-sunken: #111114;
-    --ink: #eceae5;
-    --ink-muted: #a9a59d;
-    --ink-faint: #7b7770;
-    --rule: #33333c;
-    --accent: #e8895f;
-    --accent-ink: #16161a;
-    --accent-wash: #2a2028;
-    --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 16px rgb(0 0 0 / 30%);
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 /* ---------------------------------------------------------------- base */
@@ -182,21 +163,6 @@ body > footer {
 .theme-toggle__icon {
   font-size: 0.95rem;
   line-height: 1;
-}
-
-/* The label swaps with the theme: the button names what a click will do. */
-.theme-toggle__label::after {
-  content: "Dark";
-}
-
-:root[data-theme="dark"] .theme-toggle__label::after {
-  content: "Light";
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) .theme-toggle__label::after {
-    content: "Light";
-  }
 }
 
 /* Nothing to toggle before the script runs; it removes this attribute. */
@@ -343,7 +309,7 @@ th {
   font-size: 0.8rem;
 }
 
-/* A retrieval-practice prompt. Issue #12 builds the interactive quiz on top of this. */
+/* A retrieval-practice prompt. Ticket #12 builds the interactive quiz on top of this. */
 .recall {
   margin: 0 0 1.25rem;
   padding: 1rem 1.1rem;
@@ -446,9 +412,17 @@ th {
   }
 
   /* Nothing hides an answer on paper: a printed page is reread, not worked through.
-     lesson.js opens every <details> before printing; this only tidies the toggle away. */
-  .recall details > summary {
+     lesson.js opens every <details> before printing, and the toggle is then redundant.
+     Safari fires no beforeprint event, so the answer is also forced open in CSS; where
+     ::details-content isn't supported either, the summary stays visible rather than
+     printing a box whose answer has silently vanished. */
+  .recall details[open] > summary {
     display: none;
+  }
+
+  .recall details::details-content {
+    content-visibility: visible;
+    block-size: auto;
   }
 
   /* A printed link is useless unless its target is printed with it. */

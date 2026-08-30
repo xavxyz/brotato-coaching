@@ -13,10 +13,11 @@
  * Markup contract for the toggle, from lesson.css:
  *   <button class="theme-toggle" hidden>
  *     <span class="theme-toggle__icon">…</span>
- *     <span class="theme-toggle__label">…</span>
+ *     <span class="theme-toggle__label"></span>
  *   </button>
  * It is `hidden` in the markup so that a page opened with JavaScript off shows no dead
- * control; this script unhides it. The label text comes from CSS, which knows the theme.
+ * control; this script unhides it and fills in the label, which names the theme a click
+ * will switch to.
  */
 
 (function () {
@@ -63,19 +64,46 @@
     applyTheme(stored);
   }
 
+  // The button names what a click will do, not what the theme currently is.
+  function labelToggle(button) {
+    var label = button.querySelector(".theme-toggle__label");
+
+    if (label) {
+      label.textContent = currentTheme() === "dark" ? "Light" : "Dark";
+    }
+  }
+
   function wireToggle() {
-    var buttons = document.querySelectorAll(".theme-toggle");
+    var button = document.querySelector(".theme-toggle");
 
-    Array.prototype.forEach.call(buttons, function (button) {
-      button.hidden = false;
-      button.setAttribute("type", "button");
+    if (!button) {
+      return;
+    }
 
-      button.addEventListener("click", function () {
-        var next = currentTheme() === "dark" ? "light" : "dark";
-        applyTheme(next);
-        storeTheme(next);
-      });
+    button.hidden = false;
+    button.setAttribute("type", "button");
+    labelToggle(button);
+
+    button.addEventListener("click", function () {
+      var next = currentTheme() === "dark" ? "light" : "dark";
+      applyTheme(next);
+      storeTheme(next);
+      labelToggle(button);
     });
+
+    // Until a choice is made the page follows the system, so the label has to follow it too.
+    if (window.matchMedia) {
+      var query = window.matchMedia("(prefers-color-scheme: dark)");
+      var onSystemChange = function () {
+        labelToggle(button);
+      };
+
+      if (query.addEventListener) {
+        query.addEventListener("change", onSystemChange);
+      } else if (query.addListener) {
+        query.addListener(onSystemChange);
+      }
+    }
   }
 
   function openDetailsForPrinting() {

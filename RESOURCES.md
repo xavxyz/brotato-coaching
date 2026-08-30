@@ -34,22 +34,22 @@ Rules that hold for every entry:
 
 ### Stat mechanics
 
-_To be populated by the research pass (issue #4)._
+_To be populated by the research pass (ticket #4)._
 Damage, attack speed, crit, engineering: how each actually computes.
 
 ### Shop economy
 
-_To be populated by the research pass (issue #4)._
+_To be populated by the research pass (ticket #4)._
 Item pricing, reroll pricing, income and the cost of greed.
 
 ### Wave and enemy scaling
 
-_To be populated by the research pass (issue #4)._
+_To be populated by the research pass (ticket #4)._
 How enemy count, health and damage scale by wave and by danger.
 
 ### Weapon archetypes
 
-_To be populated by the research pass (issue #4)._
+_To be populated by the research pass (ticket #4)._
 The weapon families and the stats each one scales with.
 
 ## Open questions

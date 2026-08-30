@@ -45,10 +45,9 @@ lesson.
 #### Heuristics recorded
 
 _None recorded yet._ The coach's heuristics are captured as they are stated, each with the
-context it was given in and the wave or decision it applies to.
+context it was given in and the wave or decision it applies to. Where one is later
+contradicted by the extracted game data, the contradiction is written under the heuristic and
+the heuristic stays as stated.
 
-## Open questions
-
-_None yet._ Points where sources disagree and the disagreement has not been resolved are
-recorded in `RESOURCES.md`; points where the coach disagrees with the extracted game data are
-recorded above.
+Open questions have one home, and it is not this file: disagreements between sources — the
+coach included — are recorded under _Open questions_ in `RESOURCES.md`.
