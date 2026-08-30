@@ -8,10 +8,9 @@ save parser stays free to change without touching a test.
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
-from conftest import PLACEHOLDER_STEAM_ID, CliRunner
+from conftest import PLACEHOLDER_STEAM_ID, CliRunner, steam_ids_in
 
 # Values read off the committed real save. They are assertions about the
 # fixture, so they are allowed to be exact.
@@ -150,7 +149,7 @@ def test_purchase_counts_are_reported_as_raw_item_ids(
 
 def test_no_steam_id_reaches_the_output(cli: CliRunner, real_save_root: Path) -> None:
     stdout = cli("progress", application_support=real_save_root).stdout
-    assert re.search(r"\d{17}", stdout) is None
+    assert steam_ids_in(stdout) == set()
 
 
 # --- finding the save ------------------------------------------------------
