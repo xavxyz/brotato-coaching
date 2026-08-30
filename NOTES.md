@@ -22,27 +22,24 @@ is to derive a plan for a character never played.
 Every claim in a lesson or reference doc names its source, and every page names the patch it
 was written against. See `RESOURCES.md` for the source list.
 
-**The coach's heuristics are recorded and attributed, never silently merged.**
-When the coach's heuristic and the extracted game data disagree, both are shown and the
+**JPot's heuristics are recorded and attributed, never silently merged.**
+When a heuristic of JPot's and the extracted game data disagree, both are shown and the
 disagreement is named. A contradiction is a learning moment; averaging it away destroys one.
 
 ## Named sources
 
-### `coach`
+### JPot
 
 The friend who coached the Danger 5 Abyssal Terrors win described in `MISSION.md`.
 300+ hours played, every character cleared at Danger 5. Human, experience-based, unversioned:
 high trust on judgement and priorities, no trust on exact numbers, and possibly anchored on an
 older patch than the one in `MISSION.md`.
 
-> **Name to fill in.** Attribution should carry the coach's actual name; it is written as
-> `coach` until that is supplied.
-
-Cite as `[coach]` inline. A heuristic is recorded here only once it has been stated in those
+Cite as `[JPot]` inline. A heuristic is recorded here only once it has been stated in those
 terms, and it stays here verbatim even after data contradicts it — the contradiction is the
 lesson.
 
-The coach is this workspace's sole wisdom source, and the reason the mission exists: the coached
+JPot is this workspace's sole wisdom source, and the reason the mission exists: the coached
 Danger 5 wins measure *their* model, not the player's. Writing their heuristics down is how that
 model becomes transferable.
 
@@ -51,10 +48,10 @@ extracted game data, and it is never listed in `RESOURCES.md` as a row.
 
 #### Heuristics recorded
 
-**Nothing has been captured yet.** The coach's heuristics are captured as they are stated, each
-with the context it was given in and the wave or decision it applies to. Where one is later
-contradicted by the extracted game data, the contradiction is written under the heuristic and the
-heuristic stays as stated.
+_None recorded yet — tracked by ticket #16._ They are captured as JPot states them, each with
+the context it was given in and the wave or decision it applies to. Where one is later
+contradicted by the extracted game data, the contradiction is written under the heuristic and
+the heuristic stays as stated.
 
 The hooks below mirror the four research topics in `RESOURCES.md`, so a heuristic can be dropped
 next to the mechanics it bears on.
@@ -85,7 +82,7 @@ anything from a single point of Melee Damage.
 
 _Not yet captured._ This is the highest-value hook of the five: user story 2 of the spec is being
 able to derive a plan for a character never played, which is precisely what the player currently
-cannot do without the coach in the room.
+cannot do without JPot in the room.
 
-Open questions have one home, and it is not this file: disagreements between sources — the
-coach included — are recorded under _Open questions_ in `RESOURCES.md`.
+Open questions have one home, and it is not this file: disagreements between sources — JPot
+included — are recorded under _Open questions_ in `RESOURCES.md`.

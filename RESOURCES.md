@@ -62,8 +62,8 @@ Rules that hold for every entry:
   source publishes no date, the row says `undated` and gives an inferential anchor.
 - **Disagreements are recorded, not resolved.** Where two sources conflict, the conflict goes
   in _Open questions_ below and stays there until data settles it.
-- **The coach is not listed here.** The coach's heuristics live in `NOTES.md` as a named
-  source, and are cited from there where they bear on a topic.
+- **JPot is not listed here.** JPot's heuristics live in `NOTES.md` as a named source, and
+  are cited from there where they bear on a topic.
 
 ## How to read the trust column
 
@@ -305,9 +305,9 @@ silent. Most resolve against extracted game data once ticket #6 lands — those 
 
 ---
 
-## Where the coach's heuristics go
+## Where JPot's heuristics go
 
-Not here. A heuristic from the coach is a **hypothesis to test against this register**, not a row
+Not here. A heuristic from JPot is a **hypothesis to test against this register**, not a row
 in it, so it lives in `NOTES.md` next to the topic it bears on — see that file for the hooks, the
 attribution rule, and the current state (**none captured yet**).
 
