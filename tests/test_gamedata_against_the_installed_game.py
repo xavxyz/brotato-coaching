@@ -1,0 +1,115 @@
+"""The extractor against the real thing, skipped where the game is not installed.
+
+The synthetic tests prove the readers; these prove the readers are pointed at
+the right numbers. They assert a known character's modifiers, because a parser
+can be perfectly correct about a file and still be reading the wrong field.
+
+Values here are the game's, so a patch may move them. That is the point of the
+version stamp: when one of these fails after an update, the failure is the news.
+"""
+
+import json
+from pathlib import Path
+
+import pytest
+
+from brotato_coaching.gamedata import (
+    GameInstall,
+    InstallNotFound,
+    extract,
+    find_install,
+)
+
+
+def installed_game() -> GameInstall | None:
+    try:
+        return find_install()
+    except InstallNotFound:
+        return None
+
+
+INSTALL = installed_game()
+
+pytestmark = pytest.mark.skipif(
+    INSTALL is None, reason="Brotato is not installed on this machine"
+)
+
+
+@pytest.fixture(scope="module")
+def extracted(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    assert INSTALL is not None
+    return extract(INSTALL, tmp_path_factory.mktemp("data")).directory
+
+
+def catalogue(directory: Path, name: str) -> list[dict]:
+    return json.loads((directory / f"{name}.json").read_text())[name]
+
+
+def test_the_extraction_is_stamped_with_the_installed_version(extracted: Path) -> None:
+    assert INSTALL is not None
+    stamped = json.loads((extracted / "characters.json").read_text())["game_version"]
+
+    assert stamped == INSTALL.version
+    assert stamped != "unknown"
+
+
+def test_both_zones_contribute_characters(extracted: Path) -> None:
+    sources = {character["source"] for character in catalogue(extracted, "characters")}
+
+    assert sources == {"base", "abyssal_terrors"}
+
+
+def test_a_dlc_character_is_extracted(extracted: Path) -> None:
+    identifiers = {character["id"] for character in catalogue(extracted, "characters")}
+
+    assert "character_buccaneer" in identifiers
+
+
+def test_the_wildlings_modifiers_are_the_ones_the_game_ships(extracted: Path) -> None:
+    wildling = next(
+        character
+        for character in catalogue(extracted, "characters")
+        if character["id"] == "character_wildling"
+    )
+
+    assert wildling["name_key"] == "CHARACTER_WILDLING"
+    assert [
+        (modifier["kind"], modifier["key"], modifier["value"])
+        for modifier in wildling["modifiers"]
+    ] == [
+        ("class_bonus_effect", "EFFECT_WEAPON_CLASS_BONUS", 30),
+        ("effect", "weapon_stick_1", 1),
+        ("effect", "max_weapon_tier", 1),
+    ]
+    lifesteal_on_primitives = wildling["modifiers"][0]
+    assert lifesteal_on_primitives["set_id"] == "set_primitive"
+    assert lifesteal_on_primitives["stat_name"] == "lifesteal"
+    assert wildling["starting_weapons"][0] == "weapon_stick_1"
+
+
+def test_a_known_weapons_stats_are_the_ones_the_game_ships(extracted: Path) -> None:
+    pistol = next(
+        weapon
+        for weapon in catalogue(extracted, "weapons")
+        if weapon["id"] == "weapon_pistol_1"
+    )
+
+    assert pistol["class"] == "ranged"
+    assert pistol["stats"]["damage"] == 12
+    assert pistol["stats"]["cooldown"] == 60
+    assert pistol["upgrades_into"] == "weapon_pistol_2"
+    assert pistol["sets"] == ["set_gun"]
+
+
+def test_a_known_items_effects_are_extracted(extracted: Path) -> None:
+    turret = next(
+        item for item in catalogue(extracted, "items") if item["id"] == "item_turret"
+    )
+
+    assert turret["name_key"] == "ITEM_TURRET"
+    assert turret["effects"], "an item with an effect should carry it"
+
+
+def test_every_catalogue_is_populated(extracted: Path) -> None:
+    for name in ("characters", "weapons", "items"):
+        assert len(catalogue(extracted, name)) > 30, name

@@ -1,8 +1,8 @@
 """The one seam: a single entry point whose subcommands write JSON to stdout.
 
-Each subcommand composes the packages that do the work. Those not yet built are
-registered here and refuse at the point of use — the surface is the contract, and
-it is fixed before the implementations arrive.
+Each subcommand composes the packages that do the work. Any not built yet are
+registered here and refuse at the point of use — the surface is the contract,
+and it was fixed before the implementations arrived.
 
 A subcommand exits non-zero only when it could not do what it was asked. States
 worth reporting — no run in progress, nothing captured, no watcher running — are
@@ -14,10 +14,21 @@ import json
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
+
+from brotato_coaching.gamedata import (
+    UNKNOWN_VERSION,
+    InstallNotFound,
+    extract,
+    find_install,
+)
+from brotato_coaching.savefile import SaveUnavailable, read_progress
 
 from . import _paths
 from .runlog import AlreadyWatching, RunLog, UnknownRun
+
+DEFAULT_DATA_DIRECTORY = Path("data")
 
 
 @dataclass(frozen=True)
@@ -45,6 +56,50 @@ def _run_log() -> RunLog:
 
 def _emit(payload: object, *, streaming: bool = False) -> int:
     print(json.dumps(payload, indent=None if streaming else 2), flush=True)
+    return 0
+
+
+def _extract(arguments: argparse.Namespace) -> int:
+    try:
+        install = find_install()
+    except InstallNotFound as error:
+        print(f"brotato-coaching: {error}", file=sys.stderr)
+        return 1
+    extraction = extract(install, Path(arguments.destination))
+    if extraction.version == UNKNOWN_VERSION:
+        print(
+            "brotato-coaching: the install would not say which patch it is; "
+            "the extracted data is not patch-stamped",
+            file=sys.stderr,
+        )
+    print(
+        json.dumps(
+            {
+                "game_version": extraction.version,
+                "directory": str(extraction.directory),
+                "files": [file.name for file in extraction.files],
+                "counts": extraction.counts,
+                "sources": list(extraction.sources),
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
+def _progress(_arguments: argparse.Namespace) -> int:
+    """Report the save as JSON.
+
+    The ids in `deaths` and `purchases` come out raw. Resolving them to names
+    is the join between `savefile` and `gamedata`, and it belongs here — but
+    the join is not built yet, so for now raw is all there is.
+    """
+    try:
+        report = read_progress()
+    except SaveUnavailable as unavailable:
+        print(f"brotato-coaching: {unavailable}", file=sys.stderr)
+        return 1
+    print(json.dumps(report.as_json_object(), indent=2))
     return 0
 
 
@@ -92,9 +147,21 @@ def _runs(arguments: argparse.Namespace) -> int:
 _SUBCOMMANDS: dict[str, _Subcommand] = {
     "extract": _Subcommand(
         help="extract character modifiers, weapon stats and item effects from the installed game",
+        handler=_extract,
+        arguments=(
+            _Argument(
+                name="--destination",
+                help="directory to write the JSON into",
+                options={
+                    "metavar": "DIRECTORY",
+                    "default": str(DEFAULT_DATA_DIRECTORY),
+                },
+            ),
+        ),
     ),
     "progress": _Subcommand(
         help="report progress per character, deaths, purchases and lifetime totals from the save data",
+        handler=_progress,
     ),
     "runs": _Subcommand(
         help="list captured runs, or read the snapshots captured for one run",
