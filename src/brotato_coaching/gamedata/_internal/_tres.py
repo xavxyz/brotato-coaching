@@ -66,7 +66,6 @@ class Resource:
 
     properties: dict[str, Any]
     external: dict[str, ExternalResource]
-    sub_resources: dict[str, dict[str, Any]]
 
     @property
     def script_path(self) -> str | None:
@@ -90,7 +89,6 @@ def parse_resource(text: str) -> Resource:
 
     properties: dict[str, Any] = {}
     external: dict[str, ExternalResource] = {}
-    sub_resources: dict[str, dict[str, Any]] = {}
 
     for index, section in enumerate(sections):
         end = sections[index + 1].start() if index + 1 < len(sections) else len(text)
@@ -105,12 +103,10 @@ def parse_resource(text: str) -> Resource:
             )
         elif kind == "resource":
             properties = _parse_body(body)
-        elif kind == "sub_resource":
-            sub_resources[_unquote(attributes.get("id", ""))] = _parse_body(body)
+        # A [sub_resource] section only delimits the one that follows it: its
+        # properties belong to the sub-resource, not to the resource itself.
 
-    return Resource(
-        properties=properties, external=external, sub_resources=sub_resources
-    )
+    return Resource(properties=properties, external=external)
 
 
 def _unquote(value: str) -> str:

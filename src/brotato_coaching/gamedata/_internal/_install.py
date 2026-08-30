@@ -6,9 +6,14 @@ lists every library on the machine, and Brotato lives at
 library Steam does not list — an external drive, a copy pulled from elsewhere —
 sets `BROTATO_INSTALL_DIR` and skips the search entirely.
 
+Two containers make up the game: the base game's, and the Abyssal Terrors zone's.
+An install is whichever of them are on disk.
+
 The version is the game's, not the engine's: the patch the extracted numbers are
 true for. macOS keeps it in the app bundle's `Info.plist`; where there is no
 bundle, Steam's build id names the patch just as unambiguously, if less legibly.
+Where neither is readable the version is `UNKNOWN_VERSION`, and the caller is
+expected to say so rather than pass an unstamped extraction off as a stamped one.
 """
 
 import os
@@ -19,20 +24,23 @@ from dataclasses import dataclass
 from pathlib import Path
 
 INSTALL_DIR_VARIABLE = "BROTATO_INSTALL_DIR"
+UNKNOWN_VERSION = "unknown"
 
 _STEAM_APP_ID = "1942280"
-_BASE_CONTAINER = "Brotato.app/Contents/Resources/Brotato.pck"
-_LINUX_BASE_CONTAINER = "Brotato.pck"
-_DLC_CONTAINER = "BrotatoAbyssalTerrors.pck"
+_BASE_CONTAINERS = (
+    Path("Brotato.app/Contents/Resources/Brotato.pck"),  # macOS
+    Path("Brotato.pck"),  # everywhere else
+)
+_ABYSSAL_TERRORS_CONTAINER = Path("BrotatoAbyssalTerrors.pck")
 _BUILD_ID = re.compile(r'"buildid"\s*"(\d+)"')
 _LIBRARY_PATH = re.compile(r'"path"\s*"([^"]+)"')
 
 _STEAM_ROOTS = (
-    "~/Library/Application Support/Steam",
-    "~/.local/share/Steam",
-    "~/.steam/steam",
-    "C:/Program Files (x86)/Steam",
+    "Library/Application Support/Steam",
+    ".local/share/Steam",
+    ".steam/steam",
 )
+_WINDOWS_STEAM_ROOTS = ("C:/Program Files (x86)/Steam",)
 
 
 class InstallNotFound(Exception):
@@ -43,8 +51,9 @@ class InstallNotFound(Exception):
 class GameInstall:
     """Where the game is, and which patch it is.
 
-    `containers` are the `.pck` files to read, base game first. Constructing one
-    directly is how a caller points the extractor at containers of its own.
+    `containers` are the `.pck` files to read, the base game's first.
+    Constructing one directly is how a caller points the extractor at containers
+    of its own.
     """
 
     directory: Path
@@ -64,22 +73,33 @@ def find_install(environment: Mapping[str, str] | None = None) -> GameInstall:
             )
         return _install_at(directory)
 
-    for directory in _candidate_directories():
-        if directory.is_dir():
+    searched: list[Path] = []
+    for directory in _candidate_directories(environment):
+        searched.append(directory)
+        if not directory.is_dir():
+            continue
+        try:
             return _install_at(directory)
+        except InstallNotFound:
+            # A directory Steam still lists but no longer fills — a partial
+            # uninstall — must not end the search for a library that has it.
+            continue
     raise InstallNotFound(
-        "no Brotato install found in any Steam library; set "
-        f"{INSTALL_DIR_VARIABLE} to the directory holding {_DLC_CONTAINER}"
+        f"no Brotato install found in {len(searched)} Steam location(s); set "
+        f"{INSTALL_DIR_VARIABLE} to the directory holding "
+        f"{_ABYSSAL_TERRORS_CONTAINER}"
     )
 
 
-def _candidate_directories() -> list[Path]:
-    directories: list[Path] = []
-    for root in _STEAM_ROOTS:
-        steam = Path(root).expanduser()
-        for library in _libraries(steam):
-            directories.append(library / "steamapps" / "common" / "Brotato")
-    return directories
+def _candidate_directories(environment: Mapping[str, str]) -> list[Path]:
+    home = Path(environment.get("HOME") or Path.home())
+    roots = [home / root for root in _STEAM_ROOTS]
+    roots += [Path(root) for root in _WINDOWS_STEAM_ROOTS]
+    return [
+        library / "steamapps" / "common" / "Brotato"
+        for root in roots
+        for library in _libraries(root)
+    ]
 
 
 def _libraries(steam_root: Path) -> list[Path]:
@@ -95,15 +115,15 @@ def _libraries(steam_root: Path) -> list[Path]:
 
 
 def _install_at(directory: Path) -> GameInstall:
+    """Read the containers in `directory`. Raises `InstallNotFound` if none."""
     containers = [
-        candidate
-        for candidate in (
-            directory / _BASE_CONTAINER,
-            directory / _LINUX_BASE_CONTAINER,
-            directory / _DLC_CONTAINER,
-        )
-        if candidate.is_file()
-    ]
+        base
+        for base in (directory / name for name in _BASE_CONTAINERS)
+        if base.is_file()
+    ][:1]
+    abyssal_terrors = directory / _ABYSSAL_TERRORS_CONTAINER
+    if abyssal_terrors.is_file():
+        containers.append(abyssal_terrors)
     if not containers:
         raise InstallNotFound(f"{directory} holds no .pck container")
     return GameInstall(
@@ -128,4 +148,4 @@ def _version_at(directory: Path) -> str:
         found = _BUILD_ID.search(manifest.read_text(errors="replace"))
         if found:
             return f"steam-build-{found.group(1)}"
-    return "unknown"
+    return UNKNOWN_VERSION

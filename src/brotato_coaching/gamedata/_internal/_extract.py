@@ -17,18 +17,29 @@ from ._catalog import Catalog, build_catalog
 from ._container import open_container
 from ._install import GameInstall
 
-_DLC_SOURCE = "abyssal_terrors"
-_BASE_SOURCE = "base"
+ABYSSAL_TERRORS_SOURCE = "abyssal_terrors"
+BASE_SOURCE = "base"
+
+_CONTAINER_SOURCES = {
+    "BrotatoAbyssalTerrors.pck": ABYSSAL_TERRORS_SOURCE,
+    "Brotato.pck": BASE_SOURCE,
+}
 
 
 @dataclass(frozen=True)
 class Extraction:
-    """What an extraction produced: the files written, and what is in them."""
+    """What an extraction produced: the files written, and what is in them.
+
+    `sources` names the zones the catalogues were read from, so a caller can see
+    that an install was missing a container rather than inferring it from a
+    surprisingly small count.
+    """
 
     version: str
     directory: Path
     files: tuple[Path, ...]
     counts: dict[str, int]
+    sources: tuple[str, ...]
 
 
 def extract(install: GameInstall, destination: Path) -> Extraction:
@@ -39,15 +50,18 @@ def extract(install: GameInstall, destination: Path) -> Extraction:
     catalog = build_catalog(containers)
     destination.mkdir(parents=True, exist_ok=True)
 
-    files = tuple(
-        _write(destination / f"{name}.json", install.version, name, entities)
-        for name, entities in _catalogues(catalog)
-    )
+    files: list[Path] = []
+    counts: dict[str, int] = {}
+    for name, entities in _catalogues(catalog):
+        files.append(_write(destination / f"{name}.json", install.version, name, entities))
+        counts[name] = len(entities)
+
     return Extraction(
         version=install.version,
         directory=destination,
-        files=files,
-        counts={name: len(entities) for name, entities in _catalogues(catalog)},
+        files=tuple(files),
+        counts=counts,
+        sources=tuple(containers),
     )
 
 
@@ -60,10 +74,11 @@ def _catalogues(catalog: Catalog) -> tuple[tuple[str, list], ...]:
 
 
 def _source_name(container: Path) -> str:
-    return _DLC_SOURCE if "Abyssal" in container.name else _BASE_SOURCE
+    """Which zone a container holds, by the name the game ships it under."""
+    return _CONTAINER_SOURCES.get(container.name, container.stem)
 
 
 def _write(path: Path, version: str, name: str, entities: list) -> Path:
     document = {"game_version": version, name: entities}
-    path.write_text(json.dumps(document, indent=2, sort_keys=False) + "\n")
+    path.write_text(json.dumps(document, indent=2) + "\n")
     return path

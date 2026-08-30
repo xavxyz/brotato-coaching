@@ -14,6 +14,7 @@ import pytest
 
 from brotato_coaching.gamedata import (
     INSTALL_DIR_VARIABLE,
+    UNKNOWN_VERSION,
     GameInstall,
     InstallNotFound,
     extract,
@@ -110,7 +111,7 @@ key = "stat_hp_regeneration"
 value = 3
 """
 
-DLC_CHARACTER_TRES = """[gd_resource type="Resource" load_steps=2 format=2]
+ABYSSAL_TERRORS_CHARACTER_TRES = """[gd_resource type="Resource" load_steps=2 format=2]
 
 [ext_resource path="res://items/global/character_data.gd" type="Script" id=1]
 
@@ -131,8 +132,8 @@ BASE_RESOURCES = {
     "res://items/global/effect.gd": "# script bytes, never parsed\n",
 }
 
-DLC_RESOURCES = {
-    "res://dlcs/dlc_1/characters/diver/diver_data.tres": DLC_CHARACTER_TRES,
+ABYSSAL_TERRORS_RESOURCES = {
+    "res://dlcs/dlc_1/characters/diver/diver_data.tres": ABYSSAL_TERRORS_CHARACTER_TRES,
 }
 
 
@@ -171,7 +172,7 @@ def synthetic_install(tmp_path: Path) -> GameInstall:
         containers=(
             write_container(directory / "Brotato.pck", BASE_RESOURCES),
             write_container(
-                directory / "BrotatoAbyssalTerrors.pck", DLC_RESOURCES
+                directory / "BrotatoAbyssalTerrors.pck", ABYSSAL_TERRORS_RESOURCES
             ),
         ),
         version="1.2.3-test",
@@ -317,7 +318,7 @@ class TestFindInstall:
     def test_the_environment_override_wins(self, tmp_path: Path) -> None:
         directory = tmp_path / "elsewhere"
         directory.mkdir()
-        write_container(directory / "BrotatoAbyssalTerrors.pck", DLC_RESOURCES)
+        write_container(directory / "BrotatoAbyssalTerrors.pck", ABYSSAL_TERRORS_RESOURCES)
 
         install = find_install({INSTALL_DIR_VARIABLE: str(directory)})
 
@@ -365,3 +366,126 @@ class TestFindInstall:
         install = find_install({INSTALL_DIR_VARIABLE: str(directory)})
 
         assert install.version == "steam-build-23429717"
+
+
+def install_directory(
+    directory: Path, *, base: bool = True, abyssal_terrors: bool = True
+) -> Path:
+    """A directory shaped like a Steam install of the game."""
+    directory.mkdir(parents=True, exist_ok=True)
+    if base:
+        write_container(directory / "Brotato.pck", BASE_RESOURCES)
+    if abyssal_terrors:
+        write_container(
+            directory / "BrotatoAbyssalTerrors.pck", ABYSSAL_TERRORS_RESOURCES
+        )
+    return directory
+
+
+def steam_library(root: Path, *, with_game: bool) -> Path:
+    """A Steam library, holding the game or merely claiming to."""
+    common = root / "steamapps" / "common"
+    common.mkdir(parents=True, exist_ok=True)
+    if with_game:
+        install_directory(common / "Brotato")
+    else:
+        (common / "Brotato").mkdir(exist_ok=True)  # a partial uninstall
+    return root
+
+
+def library_manifest(steam_root: Path, library: Path) -> None:
+    manifest = steam_root / "steamapps" / "libraryfolders.vdf"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(
+        '"libraryfolders"\n{\n\t"0"\n\t{\n\t\t"path"\t\t"%s"\n\t}\n}\n' % library
+    )
+
+
+class TestDiscovery:
+    """Finding the install by walking Steam's own bookkeeping."""
+
+    def home_with_steam(self, tmp_path: Path) -> tuple[Path, Path]:
+        home = tmp_path / "home"
+        steam = home / "Library" / "Application Support" / "Steam"
+        steam.mkdir(parents=True)
+        return home, steam
+
+    def test_the_game_is_found_in_the_default_library(self, tmp_path: Path) -> None:
+        home, steam = self.home_with_steam(tmp_path)
+        steam_library(steam, with_game=True)
+
+        install = find_install({"HOME": str(home)})
+
+        assert install.directory.name == "Brotato"
+        assert [container.name for container in install.containers] == [
+            "Brotato.pck",
+            "BrotatoAbyssalTerrors.pck",
+        ]
+
+    def test_a_library_steam_lists_elsewhere_is_searched(self, tmp_path: Path) -> None:
+        home, steam = self.home_with_steam(tmp_path)
+        elsewhere = steam_library(tmp_path / "external-drive", with_game=True)
+        library_manifest(steam, elsewhere)
+
+        install = find_install({"HOME": str(home)})
+
+        assert install.directory == elsewhere / "steamapps" / "common" / "Brotato"
+
+    def test_a_library_that_no_longer_holds_the_game_does_not_end_the_search(
+        self, tmp_path: Path
+    ) -> None:
+        home, steam = self.home_with_steam(tmp_path)
+        steam_library(steam, with_game=False)
+        elsewhere = steam_library(tmp_path / "second-library", with_game=True)
+        library_manifest(steam, elsewhere)
+
+        install = find_install({"HOME": str(home)})
+
+        assert install.directory == elsewhere / "steamapps" / "common" / "Brotato"
+
+    def test_no_install_anywhere_is_an_error_naming_the_override(
+        self, tmp_path: Path
+    ) -> None:
+        home, _ = self.home_with_steam(tmp_path)
+
+        with pytest.raises(InstallNotFound, match=INSTALL_DIR_VARIABLE):
+            find_install({"HOME": str(home)})
+
+
+class TestVersion:
+    def test_an_install_that_names_no_patch_is_stamped_unknown(
+        self, tmp_path: Path
+    ) -> None:
+        directory = install_directory(tmp_path / "Brotato")
+
+        install = find_install({INSTALL_DIR_VARIABLE: str(directory)})
+
+        assert install.version == UNKNOWN_VERSION
+
+    def test_an_unstamped_extraction_says_so_in_the_json(self, tmp_path: Path) -> None:
+        directory = install_directory(tmp_path / "Brotato")
+        install = find_install({INSTALL_DIR_VARIABLE: str(directory)})
+
+        extraction = extract(install, tmp_path / "data")
+
+        version = read_json(extraction.directory / "characters.json")["game_version"]
+        assert version == UNKNOWN_VERSION
+
+
+def test_an_extraction_names_the_zones_it_read(
+    synthetic_install: GameInstall, tmp_path: Path
+) -> None:
+    extraction = extract(synthetic_install, tmp_path / "data")
+
+    assert extraction.sources == ("base", "abyssal_terrors")
+
+
+def test_an_install_missing_a_container_names_only_the_zone_it_has(
+    tmp_path: Path,
+) -> None:
+    directory = install_directory(tmp_path / "Brotato", abyssal_terrors=False)
+    install = find_install({INSTALL_DIR_VARIABLE: str(directory)})
+
+    extraction = extract(install, tmp_path / "data")
+
+    assert extraction.sources == ("base",)

@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from test_gamedata import BASE_RESOURCES, DLC_RESOURCES, write_container
+from test_gamedata import BASE_RESOURCES, ABYSSAL_TERRORS_RESOURCES, write_container
 
 PLANNED_SUBCOMMANDS = ("extract", "progress", "runs", "watch")
 UNBUILT_SUBCOMMANDS = ("progress", "runs", "watch")
@@ -51,7 +51,7 @@ def test_a_subcommand_that_is_not_built_yet_says_so() -> None:
 def synthetic_install(directory: Path) -> Path:
     directory.mkdir(parents=True, exist_ok=True)
     write_container(directory / "Brotato.pck", BASE_RESOURCES)
-    write_container(directory / "BrotatoAbyssalTerrors.pck", DLC_RESOURCES)
+    write_container(directory / "BrotatoAbyssalTerrors.pck", ABYSSAL_TERRORS_RESOURCES)
     return directory
 
 

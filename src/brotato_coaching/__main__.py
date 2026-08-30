@@ -12,7 +12,12 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from brotato_coaching.gamedata import InstallNotFound, extract, find_install
+from brotato_coaching.gamedata import (
+    UNKNOWN_VERSION,
+    InstallNotFound,
+    extract,
+    find_install,
+)
 
 DEFAULT_DATA_DIRECTORY = Path("data")
 
@@ -21,6 +26,7 @@ DEFAULT_DATA_DIRECTORY = Path("data")
 class _Flag:
     name: str
     help: str
+    takes_value: bool = False
     metavar: str | None = None
     default: str | None = None
 
@@ -38,6 +44,7 @@ _SUBCOMMANDS: dict[str, _Subcommand] = {
             _Flag(
                 name="--destination",
                 help="directory to write the JSON into",
+                takes_value=True,
                 metavar="DIRECTORY",
                 default=str(DEFAULT_DATA_DIRECTORY),
             ),
@@ -73,7 +80,7 @@ def _build_parser() -> argparse.ArgumentParser:
         )
         subparser.set_defaults(subcommand=name)
         for flag in subcommand.flags:
-            if flag.metavar is None:
+            if not flag.takes_value:
                 subparser.add_argument(flag.name, action="store_true", help=flag.help)
             else:
                 subparser.add_argument(
@@ -92,6 +99,12 @@ def _extract(arguments: argparse.Namespace) -> int:
         print(f"brotato-coaching: {error}", file=sys.stderr)
         return 1
     extraction = extract(install, Path(arguments.destination))
+    if extraction.version == UNKNOWN_VERSION:
+        print(
+            "brotato-coaching: the install would not say which patch it is; "
+            "the extracted data is not patch-stamped",
+            file=sys.stderr,
+        )
     print(
         json.dumps(
             {
@@ -99,6 +112,7 @@ def _extract(arguments: argparse.Namespace) -> int:
                 "directory": str(extraction.directory),
                 "files": [file.name for file in extraction.files],
                 "counts": extraction.counts,
+                "sources": list(extraction.sources),
             },
             indent=2,
         )

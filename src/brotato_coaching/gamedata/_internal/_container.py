@@ -22,6 +22,7 @@ import struct
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
+from typing import BinaryIO
 
 _MAGIC = b"GDPC"
 _SUPPORTED_FORMAT = 1
@@ -40,39 +41,29 @@ class _Entry:
     size: int
 
 
-@dataclass(frozen=True)
 class Container:
     """One `.pck`, indexed and ready to read from.
 
-    `paths` are the game's own `res://` paths. The whole index is held in
-    memory — 7416 entries is nothing — but file bytes are read on demand.
+    The whole index is held in memory — 7416 entries is nothing — but file bytes
+    are read on demand.
     """
 
-    path: Path
-    engine_version: tuple[int, int, int]
-    _entries: dict[str, _Entry]
+    def __init__(self, path: Path, entries: dict[str, _Entry]) -> None:
+        self.path = path
+        self._entries = entries
 
-    @property
-    def paths(self) -> tuple[str, ...]:
-        return tuple(self._entries)
-
-    def __contains__(self, resource_path: str) -> bool:
-        return resource_path in self._entries
-
-    def read(self, resource_path: str) -> bytes:
+    def read_text(self, resource_path: str) -> str:
+        """The bytes of one `res://` path, decoded. Raises `KeyError`."""
         entry = self._entries.get(resource_path)
         if entry is None:
             raise KeyError(f"{resource_path} is not in {self.path.name}")
         with self.path.open("rb") as handle:
             handle.seek(entry.offset)
-            return handle.read(entry.size)
+            return handle.read(entry.size).decode("utf-8")
 
-    def read_text(self, resource_path: str) -> str:
-        return self.read(resource_path).decode("utf-8")
-
-    def paths_ending_with(self, *suffixes: str) -> Iterator[str]:
+    def paths_ending_with(self, suffix: str) -> Iterator[str]:
         for resource_path in self._entries:
-            if resource_path.endswith(suffixes):
+            if resource_path.endswith(suffix):
                 yield resource_path
 
 
@@ -82,7 +73,7 @@ def open_container(path: Path) -> Container:
         if handle.read(4) != _MAGIC:
             raise MalformedContainer(f"{path} does not start with GDPC")
         try:
-            container_format, major, minor, patch = _HEADER.unpack(_exactly(handle, 16))
+            container_format = _HEADER.unpack(_exactly(handle, 16))[0]
             if container_format != _SUPPORTED_FORMAT:
                 raise MalformedContainer(
                     f"{path} is GDPC format {container_format}; only format "
@@ -93,12 +84,10 @@ def open_container(path: Path) -> Container:
             entries = dict(_read_index(handle, file_count))
         except struct.error as error:
             raise MalformedContainer(f"{path} ends mid-header: {error}") from error
-    return Container(
-        path=path, engine_version=(major, minor, patch), _entries=entries
-    )
+    return Container(path=path, entries=entries)
 
 
-def _read_index(handle, file_count: int) -> Iterator[tuple[str, _Entry]]:
+def _read_index(handle: BinaryIO, file_count: int) -> Iterator[tuple[str, _Entry]]:
     for _ in range(file_count):
         (path_length,) = struct.unpack("<I", _exactly(handle, 4))
         # Paths are null-padded to a 4-byte boundary in some writers, so the
@@ -108,7 +97,7 @@ def _read_index(handle, file_count: int) -> Iterator[tuple[str, _Entry]]:
         yield raw_path.decode("utf-8"), _Entry(offset=offset, size=size)
 
 
-def _exactly(handle, count: int) -> bytes:
+def _exactly(handle: BinaryIO, count: int) -> bytes:
     data = handle.read(count)
     if len(data) != count:
         raise MalformedContainer(
