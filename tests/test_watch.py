@@ -172,7 +172,7 @@ class TestWatcherLifecycle:
 
         stopped = workspace.json_cli("watch", "--stop")
         assert stopped["stopped"] is True
-        assert stopped["captured"] == 2
+        assert stopped["snapshots"] == 2
         assert workspace.json_cli("watch", "--status")["running"] is False
 
     def test_starting_a_watcher_that_is_already_running_is_refused(
@@ -194,9 +194,23 @@ class TestWatcherLifecycle:
         workspace.json_cli("watch", "--start")
         stopped = workspace.json_cli("watch", "--stop")
 
-        assert stopped["captured"] == 0
+        assert stopped["snapshots"] == 0
         assert "captured nothing" in stopped["note"]
-        assert workspace.json_cli("watch", "--status")["last_session"]["captured"] == 0
+        assert workspace.json_cli("watch", "--status")["last_session"]["snapshots"] == 0
+
+    def test_once_defers_to_a_running_watcher_rather_than_racing_it(
+        self, workspace: Workspace
+    ) -> None:
+        workspace.clear_state()
+        workspace.json_cli("watch", "--start")
+        try:
+            workspace.write_state(run_state(wave=1))
+            result = workspace.json_cli("watch", "--once")
+
+            assert result["captured"] is False
+            assert result["reason"] == "watcher-already-running"
+        finally:
+            workspace.json_cli("watch", "--stop")
 
     def test_stopping_a_watcher_that_is_not_running_is_reported(
         self, workspace: Workspace

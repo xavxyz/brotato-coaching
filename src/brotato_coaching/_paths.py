@@ -28,11 +28,15 @@ def live_run_state_path() -> Path:
         return Path(override).expanduser()
     if (steam_id := _steam_id()):
         return _SAVE_ROOT / steam_id / _LIVE_RUN_STATE
-    candidates = sorted(
-        _SAVE_ROOT.glob(f"*/{_LIVE_RUN_STATE}"),
-        key=lambda path: path.stat().st_mtime,
-    )
-    return candidates[-1] if candidates else _SAVE_ROOT / _LIVE_RUN_STATE
+    # The game rewrites these files under us, so a candidate can vanish between
+    # the glob and the stat. Skip it rather than fail discovery.
+    candidates = []
+    for candidate in _SAVE_ROOT.glob(f"*/{_LIVE_RUN_STATE}"):
+        try:
+            candidates.append((candidate.stat().st_mtime, candidate))
+        except OSError:
+            continue
+    return max(candidates)[1] if candidates else _SAVE_ROOT / _LIVE_RUN_STATE
 
 
 def runs_directory() -> Path:

@@ -6,14 +6,15 @@ run it belongs to, and whether the run it was watching has ended. `watch` is tha
 method in a loop; everything else reads back what it wrote.
 """
 
+import os
 import signal
 import time
 from collections.abc import Iterator
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from . import _watcher
+from ._clock import now
 from ._state import LiveState, UnreadableState, read_live_state
 from ._store import RunRecord, RunStore, UnknownRun
 
@@ -40,6 +41,10 @@ class RunLog:
 
     def capture_once(self) -> dict[str, Any]:
         """Decide, once and synchronously, whether to snapshot the live state."""
+        if (owner := self._other_watcher()) is not None:
+            # Two processes writing one run's metadata would corrupt it, and the
+            # watcher is already doing this work anyway.
+            return self._nothing("watcher-already-running", pid=owner)
         try:
             state = read_live_state(self._live_state_path)
         except FileNotFoundError:
@@ -57,8 +62,8 @@ class RunLog:
         if state.digest in run.digests:
             return self._nothing("unchanged", run_id=run.run_id)
 
-        snapshot = self._store.append(run, state, _now())
-        self._watcher_state.record_capture(run.run_id)
+        snapshot = self._store.append(run, state, now())
+        self._watcher_state.record_snapshot(run.run_id)
         return {
             "captured": True,
             "reason": None,
@@ -122,16 +127,23 @@ class RunLog:
         if current is not None:
             if current.continues(state):
                 return current
-            self._store.close(current, _now())
-        return self._store.open_run(state, _now())
+            self._store.close(current, now())
+        return self._store.open_run(state, now())
 
     def _end_current(self) -> str | None:
         """Close the run the game has just cleared, keeping its snapshots."""
         current = self._store.current_run()
         if current is None:
             return None
-        self._store.close(current, _now())
+        self._store.close(current, now())
         return current.run_id
+
+    def _other_watcher(self) -> int | None:
+        """The pid of a watcher that is not this process, if one holds `runs/`."""
+        session = self._watcher_state.running()
+        if session is None or int(session["pid"]) == os.getpid():
+            return None
+        return int(session["pid"])
 
     def _nothing(self, reason: str, **details: Any) -> dict[str, Any]:
         return {"captured": False, "reason": reason, "run_id": None, **details}
@@ -152,9 +164,3 @@ def _stop_watching(*_signal_arguments: Any) -> None:
     """Signal handler: turn the stop command's SIGTERM into an ordinary exit."""
     raise _Stopped
 
-
-def _now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-__all__ = ["RunLog", "UnknownRun"]

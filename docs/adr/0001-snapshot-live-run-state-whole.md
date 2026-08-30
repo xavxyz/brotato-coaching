@@ -61,6 +61,12 @@ Resolving them is `gamedata`'s job (spec unknown #2), not `runlog`'s.
    of character, danger or zone — or a wave earlier than one already captured —
    also starts a new run.
 
+   Those three hold steady within a run by definition, not by observation:
+   CONTEXT.md has Danger as "the difficulty tier a run is played at" and Zone as
+   "selected before a run". If a future patch makes either change mid-run, this
+   rule splits one run across several directories, which is loud in `runs` rather
+   than silent — the counts will not add up.
+
 4. **Polling, at 2 seconds.** `fswatch` is not installed on this machine and the
    spec forbids runtime dependencies. Two seconds is far below the length of a
    wave, and a poll that lands mid-write reads invalid JSON, which is reported
@@ -75,3 +81,7 @@ Resolving them is `gamedata`'s job (spec unknown #2), not `runlog`'s.
   `runs <run-id>` returns states whose stat keys are integers.
 - Still unproven: a full run captured start to finish by the watcher. That needs
   one play session with `watch --start` running, which no tooling can do for us.
+- The field inventory above rests on **one reading, at wave 2**, which was gone
+  before it could be committed as a fixture. Every test state is hand-written, so
+  the five field names `_state.py` reads are not yet checked against real data.
+  The first captured run settles that, and is worth committing as a fixture.

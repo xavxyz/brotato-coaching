@@ -49,15 +49,17 @@ def _emit(payload: object, *, streaming: bool = False) -> int:
 
 
 def _watch(arguments: argparse.Namespace) -> int:
+    """No flag means watch until stopped; each flag names one `RunLog` method."""
     run_log = _run_log()
-    if arguments.once:
-        return _emit(run_log.capture_once())
-    if arguments.start:
-        return _emit(run_log.start_watcher())
-    if arguments.stop:
-        return _emit(run_log.stop_watcher())
-    if arguments.status:
-        return _emit(run_log.watcher_status())
+    one_shot = {
+        "once": run_log.capture_once,
+        "start": run_log.start_watcher,
+        "stop": run_log.stop_watcher,
+        "status": run_log.watcher_status,
+    }
+    for flag, action in one_shot.items():
+        if getattr(arguments, flag):
+            return _emit(action())
     try:
         for event in run_log.watch():
             _emit(event, streaming=True)
@@ -66,7 +68,7 @@ def _watch(arguments: argparse.Namespace) -> int:
             {
                 "watching": False,
                 "reason": "already-running",
-                "pid": already_watching.session["pid"],
+                "pid": already_watching.pid,
             }
         )
     return 0

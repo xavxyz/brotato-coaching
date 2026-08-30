@@ -17,6 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ._clock import stamp
 from ._state import LiveState
 
 WATCHER_DIRECTORY = ".watcher"
@@ -102,7 +103,7 @@ class RunStore:
             directory=directory,
             metadata={
                 "run_id": directory.name,
-                "started_at": _stamp(at),
+                "started_at": stamp(at),
                 "last_captured_at": None,
                 "ended_at": None,
                 "character": state.character,
@@ -121,17 +122,17 @@ class RunStore:
         run.metadata["snapshots"].append(
             {
                 "file": name,
-                "captured_at": _stamp(at),
+                "captured_at": stamp(at),
                 "wave": state.wave,
                 "digest": state.digest,
             }
         )
-        run.metadata["last_captured_at"] = _stamp(at)
+        run.metadata["last_captured_at"] = stamp(at)
         self._write_metadata(run)
         return path
 
     def close(self, run: RunRecord, at: datetime) -> None:
-        run.metadata["ended_at"] = _stamp(at)
+        run.metadata["ended_at"] = stamp(at)
         self._write_metadata(run)
 
     def current_run(self) -> RunRecord | None:
@@ -188,7 +189,3 @@ class RunStore:
         (run.directory / _METADATA).write_text(
             json.dumps(run.metadata, indent=2, sort_keys=True)
         )
-
-
-def _stamp(at: datetime) -> str:
-    return at.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
