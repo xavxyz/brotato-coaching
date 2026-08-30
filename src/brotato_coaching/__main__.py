@@ -2,7 +2,7 @@
 
 Each subcommand composes the packages that do the work. The ones not built yet
 are registered here and refuse at the point of use — the surface is the
-contract, and it is fixed before the implementations arrive.
+contract, and it was fixed before the implementations arrived.
 """
 
 import argparse
@@ -18,6 +18,8 @@ from brotato_coaching.gamedata import (
     extract,
     find_install,
 )
+
+from brotato_coaching.savefile import SaveUnavailable, read_progress
 
 DEFAULT_DATA_DIRECTORY = Path("data")
 
@@ -120,7 +122,26 @@ def _extract(arguments: argparse.Namespace) -> int:
     return 0
 
 
-_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {"extract": _extract}
+def _progress(_arguments: argparse.Namespace) -> int:
+    """Report the save as JSON.
+
+    The ids in `deaths` and `purchases` come out raw. Resolving them to names
+    is the join between `savefile` and `gamedata`, and it belongs here — but
+    the join is not built yet, so for now raw is all there is.
+    """
+    try:
+        report = read_progress()
+    except SaveUnavailable as unavailable:
+        print(f"brotato-coaching: {unavailable}", file=sys.stderr)
+        return 1
+    print(json.dumps(report.as_json_object(), indent=2))
+    return 0
+
+
+_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
+    "extract": _extract,
+    "progress": _progress,
+}
 
 
 def main(argv: Sequence[str] | None = None) -> int:
