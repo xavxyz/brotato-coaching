@@ -1,0 +1,18 @@
+# Configuration holding the player's Steam ID
+.env
+
+# Extracted game data: Blackpowder Games' content, regenerated locally by `extract`
+data/
+
+# The game's own containers, never copied into the repo
+*.pck
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Claude Code scratch worktrees
+.claude/worktrees/
