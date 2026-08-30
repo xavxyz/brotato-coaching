@@ -27,8 +27,8 @@ Rules that hold for every entry:
 - **Dated or versioned, always.** An undated source cannot be told apart from a stale one.
 - **Disagreements are recorded, not resolved.** Where two sources conflict, the conflict goes
   in _Open questions_ below and stays there until data settles it.
-- **The coach is not listed here.** The coach's heuristics live in `NOTES.md` as a named
-  source, and are cited from there where they bear on a topic.
+- **JPot is not listed here.** JPot's heuristics live in `NOTES.md` as a named source, and
+  are cited from there where they bear on a topic.
 
 ## Sources by topic
 
