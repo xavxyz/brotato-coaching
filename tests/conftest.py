@@ -23,8 +23,12 @@ PLACEHOLDER_STEAM_ID = "00000000000000000"
 
 # Discovery reads these. Tests always set them explicitly, and always start from
 # an environment with them cleared, so the machine running the suite cannot leak
-# a real save — or a real Steam ID — into a result.
-_DISCOVERY_VARIABLES = ("STEAM_ID", "BROTATO_APPLICATION_SUPPORT")
+# a real save — or a real Steam ID, or a real game install — into a result.
+_DISCOVERY_VARIABLES = (
+    "STEAM_ID",
+    "BROTATO_APPLICATION_SUPPORT",
+    "BROTATO_INSTALL_DIR",
+)
 
 
 class CliResult:
@@ -65,6 +69,7 @@ def cli(tmp_path: Path) -> CliRunner:
         *arguments: str,
         application_support: Path | str | None = None,
         steam_id: str | None = None,
+        install_dir: Path | str | None = None,
         cwd: Path | None = None,
     ) -> CliResult:
         environment = {
@@ -76,6 +81,8 @@ def cli(tmp_path: Path) -> CliRunner:
             environment["BROTATO_APPLICATION_SUPPORT"] = str(application_support)
         if steam_id is not None:
             environment["STEAM_ID"] = steam_id
+        if install_dir is not None:
+            environment["BROTATO_INSTALL_DIR"] = str(install_dir)
         completed = subprocess.run(
             [sys.executable, "-m", "brotato_coaching", *arguments],
             capture_output=True,

@@ -1,9 +1,12 @@
 """The CLI is the one seam: every package is reached through it."""
 
+from pathlib import Path
+
 from conftest import CliRunner
+from test_gamedata import ABYSSAL_TERRORS_RESOURCES, BASE_RESOURCES, write_container
 
 PLANNED_SUBCOMMANDS = ("extract", "progress", "runs", "watch")
-NOT_BUILT_YET = ("extract", "runs", "watch")
+NOT_BUILT_YET = ("runs", "watch")
 
 
 def test_help_succeeds(cli: CliRunner) -> None:
@@ -29,3 +32,42 @@ def test_planned_subcommand_reports_that_it_is_not_built_yet(cli: CliRunner) -> 
         result = cli(subcommand)
         assert result.exit_code != 0
         assert "not implemented" in result.stderr.lower()
+
+
+def synthetic_install(directory: Path) -> Path:
+    directory.mkdir(parents=True, exist_ok=True)
+    write_container(directory / "Brotato.pck", BASE_RESOURCES)
+    write_container(directory / "BrotatoAbyssalTerrors.pck", ABYSSAL_TERRORS_RESOURCES)
+    return directory
+
+
+def test_extract_writes_json_into_the_destination(
+    cli: CliRunner, tmp_path: Path
+) -> None:
+    install = synthetic_install(tmp_path / "Brotato")
+    destination = tmp_path / "data"
+
+    result = cli("extract", "--destination", str(destination), install_dir=install)
+
+    assert result.exit_code == 0, result.stderr
+    summary = result.json()
+    assert summary["counts"]["characters"] == 2
+    assert sorted(path.name for path in destination.iterdir()) == [
+        "characters.json",
+        "items.json",
+        "weapons.json",
+    ]
+
+
+def test_extract_reports_an_install_it_cannot_find(
+    cli: CliRunner, tmp_path: Path
+) -> None:
+    result = cli(
+        "extract",
+        "--destination",
+        str(tmp_path / "data"),
+        install_dir=tmp_path / "nowhere",
+    )
+
+    assert result.exit_code != 0
+    assert "BROTATO_INSTALL_DIR" in result.stderr
