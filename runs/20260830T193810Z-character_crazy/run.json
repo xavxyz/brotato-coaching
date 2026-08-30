@@ -1,0 +1,347 @@
+{
+  "character": "character_crazy",
+  "danger": 5,
+  "ended_at": "2026-08-30T20:08:26.103Z",
+  "last_captured_at": "2026-08-30T20:07:52.532Z",
+  "run_id": "20260830T193810Z-character_crazy",
+  "snapshots": [
+    {
+      "captured_at": "2026-08-30T19:38:10.595Z",
+      "digest": "7cda15081d2a4070674e008d04e7f435acd4d1641fa649ad860eba23c3f33740",
+      "file": "0001.json",
+      "wave": 1
+    },
+    {
+      "captured_at": "2026-08-30T19:38:31.567Z",
+      "digest": "6a98a18fe1d45f5cc00db5756ef2e5da5fba5025d86f93b91821ccf23adaec2c",
+      "file": "0002.json",
+      "wave": 1
+    },
+    {
+      "captured_at": "2026-08-30T19:38:56.739Z",
+      "digest": "3668e529170e13aceaef5dd1efa979a0530e3da20490e2cb9a15094b71406025",
+      "file": "0003.json",
+      "wave": 1
+    },
+    {
+      "captured_at": "2026-08-30T19:39:05.122Z",
+      "digest": "7188595384850cac0c3668eae04a5b114b8945492906b12632408d5a638ce5e5",
+      "file": "0004.json",
+      "wave": 2
+    },
+    {
+      "captured_at": "2026-08-30T19:39:11.414Z",
+      "digest": "52d74f1728964302bb087733beafc0165fa0be73ddb76b576627c4c6b5525950",
+      "file": "0005.json",
+      "wave": 2
+    },
+    {
+      "captured_at": "2026-08-30T19:40:00.895Z",
+      "digest": "b794a53e5bd36ada1d60d7c20ef63b8621e0b442f75e20a35e6b221df088571a",
+      "file": "0006.json",
+      "wave": 2
+    },
+    {
+      "captured_at": "2026-08-30T19:40:09.221Z",
+      "digest": "616f011cc05023ae1706356bbc28bbd6a7f8330115217a0f9c7cf464d1ab12fa",
+      "file": "0007.json",
+      "wave": 3
+    },
+    {
+      "captured_at": "2026-08-30T19:40:15.511Z",
+      "digest": "28d45aa36297fe8cc3f0f7e5174ec58b8dbae4ce00375ca44757f5abc7e5ebb9",
+      "file": "0008.json",
+      "wave": 3
+    },
+    {
+      "captured_at": "2026-08-30T19:40:51.152Z",
+      "digest": "2c68767091d916cff3f77b5079951e7ce4befb1fd4054f84e206fef455570a61",
+      "file": "0009.json",
+      "wave": 3
+    },
+    {
+      "captured_at": "2026-08-30T19:40:59.510Z",
+      "digest": "29d459fa1f6a5da68303b4155e1ff58e95159f02465064e7cf8e35ba9172ca31",
+      "file": "0010.json",
+      "wave": 4
+    },
+    {
+      "captured_at": "2026-08-30T19:41:42.351Z",
+      "digest": "dfb0409bc0f542496cf676d608dc972aa2f8215a6260ae0594ee63eacd9055f2",
+      "file": "0011.json",
+      "wave": 4
+    },
+    {
+      "captured_at": "2026-08-30T19:42:22.238Z",
+      "digest": "c29d1a323882ea0ce66058494c071c3e3599b4ca36d89b7f7b98fb38e45b706a",
+      "file": "0012.json",
+      "wave": 4
+    },
+    {
+      "captured_at": "2026-08-30T19:42:30.580Z",
+      "digest": "6265c90cafaf63d177a288de55d9731c1ae91233552f1f6a02d839813d63d01b",
+      "file": "0013.json",
+      "wave": 5
+    },
+    {
+      "captured_at": "2026-08-30T19:42:47.322Z",
+      "digest": "6959042d19856e604aab19b43ffa8813ded441c5a15068555acdba3f39c96f34",
+      "file": "0014.json",
+      "wave": 5
+    },
+    {
+      "captured_at": "2026-08-30T19:43:31.362Z",
+      "digest": "b1e588eab06097b97ab0051ffe55a5946ff1ea08cf9390f402bdb3abde08dd81",
+      "file": "0015.json",
+      "wave": 5
+    },
+    {
+      "captured_at": "2026-08-30T19:43:37.658Z",
+      "digest": "b995761aa7f43da7887f2424f51ed2c354025025ff650d830b0ee433db92dde5",
+      "file": "0016.json",
+      "wave": 6
+    },
+    {
+      "captured_at": "2026-08-30T19:43:50.233Z",
+      "digest": "d17bf41bc06a01daee1cf30175f778bba6378eaaf3f715ce8bbd23d075557e60",
+      "file": "0017.json",
+      "wave": 6
+    },
+    {
+      "captured_at": "2026-08-30T19:44:40.587Z",
+      "digest": "51792062fe2e8cfbb4945d95c5dff1a4d8bbe1ae20befb7fbc5d3b16bf5cc37e",
+      "file": "0018.json",
+      "wave": 6
+    },
+    {
+      "captured_at": "2026-08-30T19:44:55.257Z",
+      "digest": "9579ca849b369905acdc3eaeb7a6f0cedbbcb0ea168179a7b2f183c1b393a167",
+      "file": "0019.json",
+      "wave": 7
+    },
+    {
+      "captured_at": "2026-08-30T19:45:26.694Z",
+      "digest": "1cc10682c12b7ba945722a12ab9866d6da617e50ee9680cc6be6c8783065b031",
+      "file": "0020.json",
+      "wave": 7
+    },
+    {
+      "captured_at": "2026-08-30T19:46:21.222Z",
+      "digest": "8824458ccbe69a3a0c5159e00a1c5d617edd188763811b1bf8903258f6fbfb6d",
+      "file": "0021.json",
+      "wave": 7
+    },
+    {
+      "captured_at": "2026-08-30T19:46:33.828Z",
+      "digest": "dc7853781a173904451c90f14660d71a80b4a7867441f44a37f22c96eb84737a",
+      "file": "0022.json",
+      "wave": 8
+    },
+    {
+      "captured_at": "2026-08-30T19:46:46.430Z",
+      "digest": "4a11045cd027a8a874ce51d652be04eec3e91df2e3ce7773246f52f5b4b4f6b0",
+      "file": "0023.json",
+      "wave": 8
+    },
+    {
+      "captured_at": "2026-08-30T19:47:47.260Z",
+      "digest": "96bd34deca28b45785170cc23092bbfc54932465c427c9aa2185cd980e13464a",
+      "file": "0024.json",
+      "wave": 8
+    },
+    {
+      "captured_at": "2026-08-30T19:48:01.931Z",
+      "digest": "8a2e168c2de7783848a5833cc98d087e9cdf10484ee6ffd99238c4f016de62a2",
+      "file": "0025.json",
+      "wave": 9
+    },
+    {
+      "captured_at": "2026-08-30T19:48:31.198Z",
+      "digest": "0523be0ad84da9bd5837060365b99b0904556648d6dd7dffbf9a46749aa94fb5",
+      "file": "0026.json",
+      "wave": 9
+    },
+    {
+      "captured_at": "2026-08-30T19:49:29.964Z",
+      "digest": "4104385cdbe4613e6c684c13474f2872532588be0066971a0c8525b903084bd4",
+      "file": "0027.json",
+      "wave": 9
+    },
+    {
+      "captured_at": "2026-08-30T19:49:38.345Z",
+      "digest": "28b5baa2e696dd2d0a564a9e768af51be72a3cc8d9277781d983f68a26b19bdd",
+      "file": "0028.json",
+      "wave": 10
+    },
+    {
+      "captured_at": "2026-08-30T19:50:09.827Z",
+      "digest": "b9779bedd2779b189b7c8efbcd8e944606c5c40777ed79ab881cc6f946b4fcfd",
+      "file": "0029.json",
+      "wave": 10
+    },
+    {
+      "captured_at": "2026-08-30T19:51:10.620Z",
+      "digest": "376d65853552f7583019b03d71d8bf0abb5878d34d5dabb077f6ac272d3a49d7",
+      "file": "0030.json",
+      "wave": 10
+    },
+    {
+      "captured_at": "2026-08-30T19:51:29.502Z",
+      "digest": "73727d17d8f45ff26ab28339ad9847597c42fb52b4466aa6a42f8c378851c0b5",
+      "file": "0031.json",
+      "wave": 11
+    },
+    {
+      "captured_at": "2026-08-30T19:52:07.228Z",
+      "digest": "e04a5a2c03a6e34ba4b42d69a7d1af79810c28a7142dce8d33a1290091391d15",
+      "file": "0032.json",
+      "wave": 11
+    },
+    {
+      "captured_at": "2026-08-30T19:53:08.020Z",
+      "digest": "7b1063d649c7c5049a0c4f1fe6b12be8cecc3061b7b2b812c0b40a0e47949ef4",
+      "file": "0033.json",
+      "wave": 11
+    },
+    {
+      "captured_at": "2026-08-30T19:53:45.790Z",
+      "digest": "f61fff1bfb30ce8df5dd5114aa53372584d593d00c65e64b663c3ac9b38eaf04",
+      "file": "0034.json",
+      "wave": 12
+    },
+    {
+      "captured_at": "2026-08-30T19:54:40.191Z",
+      "digest": "37f5495cf7e5cb27769003f98ec3de61449b7f94cbfec64ddb0a27daea9e3dce",
+      "file": "0035.json",
+      "wave": 12
+    },
+    {
+      "captured_at": "2026-08-30T19:55:40.954Z",
+      "digest": "fe60a5ef43b091e9de5a5ca0276326a1100a77f9b2e48639e4e3d447eae15fbe",
+      "file": "0036.json",
+      "wave": 12
+    },
+    {
+      "captured_at": "2026-08-30T19:56:04.023Z",
+      "digest": "e455f2224222df7b357b4fa574315e9ff4d67c9d82b72322b2418adaa409becf",
+      "file": "0037.json",
+      "wave": 13
+    },
+    {
+      "captured_at": "2026-08-30T19:56:24.994Z",
+      "digest": "e65747998b9ef4a6097c032bb18302f4041397051f4f536cc282ffc327c9f747",
+      "file": "0038.json",
+      "wave": 13
+    },
+    {
+      "captured_at": "2026-08-30T19:57:23.628Z",
+      "digest": "1118964daf7e389ee4a633a05e0d2a820a9afe45b066d5650e333ad652a90b78",
+      "file": "0039.json",
+      "wave": 13
+    },
+    {
+      "captured_at": "2026-08-30T19:57:36.221Z",
+      "digest": "7856084b1dd44f250c22dc241b8b79944dbcba9368155e71ae5820dcd0e0718f",
+      "file": "0040.json",
+      "wave": 14
+    },
+    {
+      "captured_at": "2026-08-30T19:58:20.326Z",
+      "digest": "5d1b4cd52fa8e8e435956fd538eb77991e36c8df3ea47b4a4de30ee33e5b2e6f",
+      "file": "0041.json",
+      "wave": 14
+    },
+    {
+      "captured_at": "2026-08-30T19:59:21.132Z",
+      "digest": "c86272ac9734faa0e17beedbd524b30ad90d27756a09cc490af1b96ecfb9841b",
+      "file": "0042.json",
+      "wave": 14
+    },
+    {
+      "captured_at": "2026-08-30T19:59:42.084Z",
+      "digest": "4c936af7da832767f6d9523b15d232be3b0cb1dd94f3c1aecfaa64698c27a8a8",
+      "file": "0043.json",
+      "wave": 15
+    },
+    {
+      "captured_at": "2026-08-30T20:00:19.875Z",
+      "digest": "783346616fefa32ec65b2c849ae8a2730d8d72cb960db7282e032a939627f806",
+      "file": "0044.json",
+      "wave": 15
+    },
+    {
+      "captured_at": "2026-08-30T20:01:20.648Z",
+      "digest": "d72ee39db124aa2b03a242aeb8d0a008021b1ba94daf77dedb7b7354855d2013",
+      "file": "0045.json",
+      "wave": 15
+    },
+    {
+      "captured_at": "2026-08-30T20:01:31.144Z",
+      "digest": "f224c98b91d22bde3f215217b9da3d76bb0a3db13ae17df764168e181dae09b9",
+      "file": "0046.json",
+      "wave": 16
+    },
+    {
+      "captured_at": "2026-08-30T20:01:58.359Z",
+      "digest": "19630383cd3ad53c889a18361880ee5b0a87ac231d0c76d31981129b5bd0e550",
+      "file": "0047.json",
+      "wave": 16
+    },
+    {
+      "captured_at": "2026-08-30T20:02:59.108Z",
+      "digest": "86a640faa7904fd7f692871cfeec88bbbb4f378a02abb63507eb468accc911f4",
+      "file": "0048.json",
+      "wave": 16
+    },
+    {
+      "captured_at": "2026-08-30T20:03:09.587Z",
+      "digest": "48a2e23b601874d7091113f3e5f1929cd70da2fe69f9d3cbbb07851caa3bdaf6",
+      "file": "0049.json",
+      "wave": 17
+    },
+    {
+      "captured_at": "2026-08-30T20:04:12.392Z",
+      "digest": "bfd9f02764823c3a659915472571ec23a704bca12d98c909fbde3b9e69ee919f",
+      "file": "0050.json",
+      "wave": 17
+    },
+    {
+      "captured_at": "2026-08-30T20:05:11.094Z",
+      "digest": "37e4e4d48c9c9c591f7b354679a91884abeac4e864b29f2c59e10ef901520bd2",
+      "file": "0051.json",
+      "wave": 17
+    },
+    {
+      "captured_at": "2026-08-30T20:05:21.575Z",
+      "digest": "b8ba9a64ccb2f5c48590144e7371c3da0d1cce2829d045b4f46e2fa50194e2f5",
+      "file": "0052.json",
+      "wave": 18
+    },
+    {
+      "captured_at": "2026-08-30T20:06:05.563Z",
+      "digest": "e171623af0ebda0e4f9b24fcf5e1bcd42f898ad01fd024de326ef35b7b87e8a3",
+      "file": "0053.json",
+      "wave": 18
+    },
+    {
+      "captured_at": "2026-08-30T20:07:06.330Z",
+      "digest": "866cfeb571355de6ef70c752dec5aed087f173395e97df4cb1c684a368e07970",
+      "file": "0054.json",
+      "wave": 18
+    },
+    {
+      "captured_at": "2026-08-30T20:07:21.034Z",
+      "digest": "2914fbab232cca048d317b36c34af9e20e11117f7f4e6108d4e375edd9a9ec7d",
+      "file": "0055.json",
+      "wave": 19
+    },
+    {
+      "captured_at": "2026-08-30T20:07:52.532Z",
+      "digest": "9be774ea1e6265c51d4752d563ecff85fa87ce318c75b0681e821bd2455e825d",
+      "file": "0056.json",
+      "wave": 19
+    }
+  ],
+  "started_at": "2026-08-30T19:38:10.594Z",
+  "zone": 0
+}

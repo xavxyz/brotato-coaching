@@ -6,7 +6,6 @@ from conftest import CliRunner
 from test_gamedata import ABYSSAL_TERRORS_RESOURCES, BASE_RESOURCES, write_container
 
 PLANNED_SUBCOMMANDS = ("extract", "progress", "runs", "watch")
-NOT_BUILT_YET = ("runs", "watch")
 
 
 def test_help_succeeds(cli: CliRunner) -> None:
@@ -25,13 +24,6 @@ def test_no_subcommand_is_an_error_that_names_the_choices(cli: CliRunner) -> Non
     assert result.exit_code != 0
     for subcommand in PLANNED_SUBCOMMANDS:
         assert subcommand in result.stderr
-
-
-def test_planned_subcommand_reports_that_it_is_not_built_yet(cli: CliRunner) -> None:
-    for subcommand in NOT_BUILT_YET:
-        result = cli(subcommand)
-        assert result.exit_code != 0
-        assert "not implemented" in result.stderr.lower()
 
 
 def synthetic_install(directory: Path) -> Path:

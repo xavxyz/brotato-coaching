@@ -7,6 +7,8 @@ dependencies = []
 
 [project.scripts]
 brotato-coaching = "brotato_coaching.__main__:main"
+# `brotato watch`, `brotato runs` — the short name the tickets are written in.
+brotato = "brotato_coaching.__main__:main"
 
 [build-system]
 requires = ["hatchling"]
