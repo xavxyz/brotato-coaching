@@ -16,3 +16,6 @@ __pycache__/
 
 # Claude Code scratch worktrees
 .claude/worktrees/
+
+# The watcher's own runtime state, not run data
+runs/.watcher/

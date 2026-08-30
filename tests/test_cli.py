@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 PLANNED_SUBCOMMANDS = ("extract", "progress", "runs", "watch")
+UNBUILT_SUBCOMMANDS = ("extract", "progress")
 
 
 def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
@@ -33,7 +34,7 @@ def test_no_subcommand_is_an_error_that_names_the_choices() -> None:
 
 
 def test_planned_subcommand_reports_that_it_is_not_built_yet() -> None:
-    for subcommand in PLANNED_SUBCOMMANDS:
+    for subcommand in UNBUILT_SUBCOMMANDS:
         result = run_cli(subcommand)
         assert result.returncode != 0
         assert "not implemented" in result.stderr.lower()

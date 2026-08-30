@@ -1,26 +1,90 @@
 """The one seam: a single entry point whose subcommands write JSON to stdout.
 
-Each subcommand composes the packages that do the work. None is built yet, so
-each one is registered here and refuses at the point of use — the surface is
-the contract, and it is fixed before the implementations arrive.
+Each subcommand composes the packages that do the work. Those not yet built are
+registered here and refuse at the point of use — the surface is the contract, and
+it is fixed before the implementations arrive.
+
+A subcommand exits non-zero only when it could not do what it was asked. States
+worth reporting — no run in progress, nothing captured, no watcher running — are
+JSON on stdout and an exit code of zero, because reporting them *is* the job.
 """
 
 import argparse
+import json
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from typing import Any
+
+from . import _paths
+from .runlog import AlreadyWatching, RunLog, UnknownRun
 
 
 @dataclass(frozen=True)
-class _Flag:
+class _Argument:
     name: str
     help: str
+    options: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
 class _Subcommand:
     help: str
-    flags: tuple[_Flag, ...] = field(default_factory=tuple)
+    handler: Callable[[argparse.Namespace], int] | None = None
+    arguments: tuple[_Argument, ...] = field(default_factory=tuple)
+    exclusive: bool = False
+
+
+def _run_log() -> RunLog:
+    return RunLog(
+        live_state_path=_paths.live_run_state_path(),
+        runs_directory=_paths.runs_directory(),
+        poll_interval=_paths.poll_interval(),
+    )
+
+
+def _emit(payload: object, *, streaming: bool = False) -> int:
+    print(json.dumps(payload, indent=None if streaming else 2), flush=True)
+    return 0
+
+
+def _watch(arguments: argparse.Namespace) -> int:
+    run_log = _run_log()
+    if arguments.once:
+        return _emit(run_log.capture_once())
+    if arguments.start:
+        return _emit(run_log.start_watcher())
+    if arguments.stop:
+        return _emit(run_log.stop_watcher())
+    if arguments.status:
+        return _emit(run_log.watcher_status())
+    try:
+        for event in run_log.watch():
+            _emit(event, streaming=True)
+    except AlreadyWatching as already_watching:
+        return _emit(
+            {
+                "watching": False,
+                "reason": "already-running",
+                "pid": already_watching.session["pid"],
+            }
+        )
+    return 0
+
+
+def _runs(arguments: argparse.Namespace) -> int:
+    run_log = _run_log()
+    if arguments.run_id is None:
+        return _emit(run_log.runs())
+    try:
+        return _emit(run_log.snapshots(arguments.run_id))
+    except UnknownRun:
+        print(
+            f"brotato-coaching: no run captured with id {arguments.run_id!r}; "
+            "`brotato-coaching runs` lists the ones there are",
+            file=sys.stderr,
+        )
+        return 1
 
 
 _SUBCOMMANDS: dict[str, _Subcommand] = {
@@ -31,14 +95,40 @@ _SUBCOMMANDS: dict[str, _Subcommand] = {
         help="report progress per character, deaths, purchases and lifetime totals from the save data",
     ),
     "runs": _Subcommand(
-        help="read the snapshots captured for a run",
+        help="list captured runs, or read the snapshots captured for one run",
+        handler=_runs,
+        arguments=(
+            _Argument(
+                name="run_id",
+                help="a run id from `runs`; omit to list every captured run",
+                options={"nargs": "?", "default": None},
+            ),
+        ),
     ),
     "watch": _Subcommand(
         help="capture snapshots of live run state while a run is in progress",
-        flags=(
-            _Flag(
+        handler=_watch,
+        exclusive=True,
+        arguments=(
+            _Argument(
                 name="--once",
-                help="take at most one snapshot and exit, rather than watching",
+                help="make a single capture decision and exit, rather than watching",
+                options={"action": "store_true"},
+            ),
+            _Argument(
+                name="--start",
+                help="start the watcher in the background and return",
+                options={"action": "store_true"},
+            ),
+            _Argument(
+                name="--stop",
+                help="stop the background watcher and report the session it captured",
+                options={"action": "store_true"},
+            ),
+            _Argument(
+                name="--status",
+                help="report whether the watcher is running and what it has captured",
+                options={"action": "store_true"},
             ),
         ),
     ),
@@ -55,20 +145,27 @@ def _build_parser() -> argparse.ArgumentParser:
         subparser = subparsers.add_parser(
             name, help=subcommand.help, description=subcommand.help
         )
-        subparser.set_defaults(subcommand=name)
-        for flag in subcommand.flags:
-            subparser.add_argument(flag.name, action="store_true", help=flag.help)
+        subparser.set_defaults(subcommand=name, handler=subcommand.handler)
+        target = (
+            subparser.add_mutually_exclusive_group()
+            if subcommand.exclusive
+            else subparser
+        )
+        for argument in subcommand.arguments:
+            target.add_argument(argument.name, help=argument.help, **argument.options)
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     arguments = parser.parse_args(argv)
-    print(
-        f"brotato-coaching: {arguments.subcommand} is not implemented yet",
-        file=sys.stderr,
-    )
-    return 1
+    if arguments.handler is None:
+        print(
+            f"brotato-coaching: {arguments.subcommand} is not implemented yet",
+            file=sys.stderr,
+        )
+        return 1
+    return arguments.handler(arguments)
 
 
 if __name__ == "__main__":
