@@ -74,14 +74,21 @@ Resolving them is `gamedata`'s job (spec unknown #2), not `runlog`'s.
 
 ## Consequences
 
-- `runs/` grows by ~25 KB per captured change. A 20-wave run is on the order of a
-  megabyte. Acceptable, and the price of not having to guess now what a review
-  will want later.
+- `runs/` grows by ~120 KB per captured change — the first real run measured 6.6
+  MB across 56 snapshots, six times the megabyte estimated here before one had
+  been taken. The file grows as the build does: 48 KB at wave 1, 130 KB by wave
+  19. Still acceptable, and still the price of not having to guess now what a
+  review will want later, but a run is a megabyte only in its opening waves.
 - Snapshots are only as readable as the hashes in them. Until `gamedata` lands,
   `runs <run-id>` returns states whose stat keys are integers.
-- Still unproven: a full run captured start to finish by the watcher. That needs
-  one play session with `watch --start` running, which no tooling can do for us.
-- The field inventory above rests on **one reading, at wave 2**, which was gone
-  before it could be committed as a fixture. Every test state is hand-written, so
-  the five field names `_state.py` reads are not yet checked against real data.
-  The first captured run settles that, and is worth committing as a fixture.
+- Settled on 2026-08-30 by `20260830T193810Z-character_crazy`, committed here: a
+  full run captured start to finish by the watcher, waves 1 through 19 at ~3
+  snapshots each, closed by the watcher itself when the game cleared the file.
+  The five field names `_state.py` reads are confirmed against real data, and
+  the field inventory above no longer rests on a single wave-2 reading.
+- That run is the fixture the tests never had. They remain hand-written, which
+  keeps them legible; the committed run is what a change to `_state.py` should
+  now be checked against.
+- Across all 56 snapshots the only file containing the player's Steam ID is
+  `runs/.watcher/last_session.json`, which records the live-state path and is
+  gitignored. Snapshots are safe to commit, as this ADR assumed from one reading.
