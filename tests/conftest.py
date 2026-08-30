@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -20,6 +21,21 @@ import pytest
 FIXTURES = Path(__file__).parent / "fixtures"
 REAL_SAVE_ROOT = FIXTURES / "save"
 PLACEHOLDER_STEAM_ID = "00000000000000000"
+
+# A Steam account id is exactly 17 digits. The digit-boundary anchors are
+# load-bearing: the repo cites Steam forum and news URLs, whose thread ids are
+# longer than an account id, and an unanchored 17-digit window would match
+# inside every one of them.
+STEAM_ID_SHAPED = re.compile(r"(?<!\d)\d{17}(?!\d)")
+
+
+def steam_ids_in(text: str) -> set[str]:
+    """Steam-ID-shaped digit runs in `text`, minus the documented placeholder."""
+    return {
+        match
+        for match in STEAM_ID_SHAPED.findall(text)
+        if match != PLACEHOLDER_STEAM_ID
+    }
 
 # Discovery reads these. Tests always set them explicitly, and always start from
 # an environment with them cleared, so the machine running the suite cannot leak
