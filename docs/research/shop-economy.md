@@ -1,6 +1,7 @@
 # Research: shop economy
 
-Researched 2026-08-30 against installed **Brotato v1.1.15.4**. Source ids `SHOP-S1`–`SHOP-S15` and
+Researched 2026-08-30. Install is **Brotato 1.1.12.0.beta-3** (see `RESOURCES.md`);
+sources name their own patches, some newer. Source ids `SHOP-S1`–`SHOP-S15` and
 open questions `SHOP-Q1`–`SHOP-Q7` are defined in `RESOURCES.md`; read the access notes there
 before trusting a constant.
 

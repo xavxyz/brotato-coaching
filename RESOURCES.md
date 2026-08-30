@@ -1,31 +1,33 @@
 # Resources
 
-The source register for this workspace. Every interpretive claim in a lesson or reference doc
-cites an id from this file. Numeric claims should come from extracted game data instead — a
+The sources this workspace's claims are grounded in. Every claim in a lesson or a reference
+doc cites an id from this file, so that a claim can be checked and so that a stale claim is
+traceable when a patch lands. Numeric claims should come from extracted game data instead — a
 source here is for *how the numbers work*, not *what the numbers are*.
 
 ## Patch stamp
 
 | What | Value |
 | --- | --- |
-| Installed game | **Brotato v1.1.15.4** (string read from `Brotato.pck`) |
+| Installed game | **Brotato 1.1.12.0.beta-3** (`CFBundleShortVersionString`, see `MISSION.md`) |
 | Steam build id | `23429717`, last updated **2026-08-26** |
 | Zones installed | Base game + Abyssal Terrors (`BrotatoAbyssalTerrors.pck` present) |
 | Latest live patch | 1.1.15.4, released **2026-05-27**, on top of 1.1.15.0 "All Pain No Gain" (2026-05-12) |
 | Research performed | **2026-08-30** |
 
-The installed version is the current live version. Nothing below is stale relative to this
-install *as a whole* — but individual sources lag the patch badly, and each row says by how much.
+**The install is a beta branch that trails the current live patch.** Nothing below was read
+against the installed build; each source was read against whatever patch it names, and several
+name a patch *newer* than the install. Each row says which. Two consequences: a claim sourced from
+1.1.15.x may not hold on this install, and a claim checked against a beta may not survive the
+stable release of the same version — `MISSION.md` makes the same point.
 
 **How these numbers were obtained**, so they can be re-derived when the patch moves. This is a
 hand check, not tooling — `extract` (#6) should supersede it:
 
 ```sh
-# Version string, from the game's own pck. Prints "1.1.15.4" (and "1.1.13.2", a stale
-# leftover string in the same container — take the highest).
-grep -a -o -E '\b1\.[0-9]+\.[0-9]+\.[0-9]+\b' \
-  ~/Library/Application\ Support/Steam/steamapps/common/Brotato/Brotato.app/Contents/Resources/Brotato.pck \
-  | sort -u
+# Installed version. This is the authoritative read: the bundle's own declared version.
+plutil -p ~/Library/Application\ Support/Steam/steamapps/common/Brotato/Brotato.app/Contents/Info.plist \
+  | grep CFBundleShortVersionString
 
 # Build id and install date, from Steam's manifest for app 1942280.
 grep -Ei 'buildid|lastupdated' \
@@ -33,9 +35,35 @@ grep -Ei 'buildid|lastupdated' \
 date -r <lastupdated-epoch> -u +%Y-%m-%d
 ```
 
+**Do not read the version out of `Brotato.pck`.** Grepping that container for version-shaped
+strings returns `1.1.15.4`, `1.1.13.2` and `1.3.5.9` — the last is not a Brotato version at all,
+so "take the highest" is not a sound rule. Those strings are incidental data, not the build stamp.
 The DLC container (`BrotatoAbyssalTerrors.pck`) carries no version string; its presence on disk is
 all that is checked. The "latest live patch" row is not from disk — it comes from `SHOP-S13`, the
 official Steam announcements hub, read on 2026-08-30.
+
+## How a source is recorded
+
+One row per source, in the table under the topic it covers. The columns carry the fields every
+entry must have: **Source** (name and link), **Date / version** (when it was last checked and the
+game version it describes), **Why trusted** (what makes it authoritative — extracted game data,
+developer output, maintained wiki, a named human with stated experience), and **Covers** (which
+claims it is cited for). Known limits are recorded where they bite: in the date column when a
+source is stale, and in _Access notes_ and _Open questions_ otherwise.
+
+Each row also carries an **Id** (`STAT-S1`, `WAVE-S4`, …), because lessons and reference docs cite
+by id rather than by name.
+
+Rules that hold for every entry:
+
+- **No Reddit.** The search tool blocks the domain outright, so a Reddit link cannot be
+  re-checked later and is not admissible here.
+- **Dated or versioned, always.** An undated source cannot be told apart from a stale one. Where a
+  source publishes no date, the row says `undated` and gives an inferential anchor.
+- **Disagreements are recorded, not resolved.** Where two sources conflict, the conflict goes
+  in _Open questions_ below and stays there until data settles it.
+- **The coach is not listed here.** The coach's heuristics live in `NOTES.md` as a named
+  source, and are cited from there where they bear on a topic.
 
 ## How to read the trust column
 
@@ -161,7 +189,7 @@ Cited as `WEAP-Sn`; see `docs/research/weapon-classes.md`.
 | WEAP-S13 | [Knockback](https://brotato.wiki.spellsandguns.com/Knockback) | edited 2024-11-19 | B | Current page | Knockback semantics |
 | WEAP-S14 | [Steam forum set-bonus reference thread](https://steamcommunity.com/app/1942280/discussions/0/3493130356505192248/) | opened 2022-10; a reply states it is maintained to **2024-05-25** | D | Long-running community reference on the official forum, maintained across patches; valuable as a wiki-independent voice | Full 17-class set-bonus table |
 | WEAP-S15 | [Fextralife: Weapons](https://brotato.wiki.fextralife.com/Weapons) | edited **2026-08-20** | D | Independent wiki with per-weapon tier tables; a second opinion on scaling notation | Tier stat progression, `×1.0` notation |
-| WEAP-S16 | [brotatobuilds.com/stats/melee-damage](https://www.brotatobuilds.com/stats/melee-damage/) | states **Brotato 1.1.15.4** | C | Datamined calculator that publishes its coefficients and shows its arithmetic — **and matches the installed patch exactly** | Scaling coefficients, double-rounding |
+| WEAP-S16 | [brotatobuilds.com/stats/melee-damage](https://www.brotatobuilds.com/stats/melee-damage/) | states **Brotato 1.1.15.4** | C | Datamined calculator that publishes its coefficients and shows its arithmetic — but it is stamped 1.1.15.4, ahead of this install | Scaling coefficients, double-rounding |
 | WEAP-S17 | [brotatobuilds.com/weapons](https://www.brotatobuilds.com/weapons/) | "compiled for **1.1.15.4**, updated 2026-08-05" | C | Same calculator, version stated explicitly | Weapon counts, full scaling-stat list |
 | WEAP-S18 | [brotato-builds.com/weapons](https://brotato-builds.com/weapons) | "2026", **no patch number** | D | SEO guide site; corroboration only, never sole support | Weapon counts, tier effects |
 
@@ -194,7 +222,7 @@ silent. Most resolve against extracted game data once ticket #6 lands — those 
    `STAT-S2`'s scaling-icon legend does not list Luck. Either the legend is incomplete or the claim
    covers only characters and items. **→ #6**
 7. **STAT-Q7 — Datamined attack-speed constants are three and a half years old.** `STAT-S5`/`STAT-S6` are from
-   0.6.1.6 (Dec 2022) against a 1.1.15.4 install. The formula *shapes* are corroborated by
+   0.6.1.6 (Dec 2022) against a 1.1.12.0.beta-3 install. The formula *shapes* are corroborated by
    present-day wiki text, but every constant should be treated as unverified. **→ #6**
 8. **STAT-Q8 — Per-structure Engineering coefficients.** Only the Turret's `10 + (80% Engineering)` was
    confirmed against raw page source (`STAT-S10`); Landmines/Laser/Explosive/Incendiary/Medical come
@@ -277,9 +305,9 @@ silent. Most resolve against extracted game data once ticket #6 lands — those 
 
 ---
 
-## Where the friend's heuristics go
+## Where the coach's heuristics go
 
-Not here. A heuristic from the friend is a **hypothesis to test against this register**, not a row
+Not here. A heuristic from the coach is a **hypothesis to test against this register**, not a row
 in it, so it lives in `NOTES.md` next to the topic it bears on — see that file for the hooks, the
 attribution rule, and the current state (**none captured yet**).
 

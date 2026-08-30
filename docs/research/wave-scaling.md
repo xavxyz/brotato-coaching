@@ -1,6 +1,7 @@
 # Research: wave structure, enemy scaling and Danger
 
-Researched 2026-08-30 against installed **Brotato v1.1.15.4**. Source ids `WAVE-S1`–`WAVE-S14` and
+Researched 2026-08-30. Install is **Brotato 1.1.12.0.beta-3** (see `RESOURCES.md`);
+sources name their own patches, some newer. Source ids `WAVE-S1`–`WAVE-S14` and
 open questions `WAVE-Q1`–`WAVE-Q7` are defined in `RESOURCES.md`; read the access notes there
 before trusting a constant.
 

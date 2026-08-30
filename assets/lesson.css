@@ -1,0 +1,434 @@
+/*
+ * lesson.css — the one stylesheet every lesson and reference doc uses.
+ *
+ * Link it, don't copy it. A page that needs a style not in here should add it here, so the
+ * next page inherits it too.
+ *
+ * Contract for a page using this file:
+ *   <html lang="en">                     — lesson.js sets data-theme on this element
+ *   <body>
+ *     <header class="page-header">       — title, subtitle, patch stamp, theme toggle
+ *     <main>                             — the content column
+ *     <footer class="page-footer">       — sources, links back
+ *
+ * Themes: light and dark, chosen by the system, overridden by the toggle, remembered in
+ * localStorage by assets/lesson.js. Printing always uses light ink on white paper regardless
+ * of the theme on screen.
+ */
+
+/* ---------------------------------------------------------------- theme tokens */
+
+/* Both palettes live here once, as light-dark() pairs. The used value follows the element's
+   color-scheme: the system's by default, or whichever one data-theme pins below. */
+:root {
+  color-scheme: light dark;
+
+  --bg: light-dark(#fbfaf7, #16161a);
+  --bg-raised: light-dark(#ffffff, #1f1f25);
+  --bg-sunken: light-dark(#f1efe9, #111114);
+  --ink: light-dark(#1d1c1a, #eceae5);
+  --ink-muted: light-dark(#5d5a53, #a9a59d);
+  --ink-faint: light-dark(#8b877e, #7b7770);
+  --rule: light-dark(#ddd8cd, #33333c);
+  --accent: light-dark(#a8442a, #e8895f);
+  --accent-wash: light-dark(#f7e8e2, #2a2028);
+  --shadow: light-dark(
+    0 1px 2px rgb(29 28 26 / 8%),
+    0 1px 2px rgb(0 0 0 / 40%)
+  ), light-dark(
+    0 4px 16px rgb(29 28 26 / 6%),
+    0 4px 16px rgb(0 0 0 / 30%)
+  );
+
+  --measure: 34rem;
+  --gutter: 1.5rem;
+  --radius: 8px;
+
+  --font-text: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* lesson.js sets data-theme once the reader has made a choice; until then there is no
+   attribute and the system preference decides. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------- base */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0 var(--gutter) 4rem;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+}
+
+body > header,
+body > main,
+body > footer {
+  max-width: var(--measure);
+  margin-inline: auto;
+}
+
+/* ---------------------------------------------------------------- header */
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 2.5rem 0 1.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.page-header__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.page-header .subtitle {
+  margin: 0.4rem 0 0;
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+}
+
+/* Every page states the patch it was written against. */
+.patch-stamp {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--bg-sunken);
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+/* ---------------------------------------------------------------- theme toggle */
+
+.theme-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--bg-raised);
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.theme-toggle__icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+/* Nothing to toggle before the script runs; it removes this attribute. */
+.theme-toggle[hidden] {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- typography */
+
+main {
+  padding-top: 1.75rem;
+}
+
+h2 {
+  margin: 2.5rem 0 0.75rem;
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+h3 {
+  margin: 1.75rem 0 0.5rem;
+  font-size: 1.1rem;
+  line-height: 1.3;
+}
+
+h2 + h3 {
+  margin-top: 1rem;
+}
+
+p,
+ul,
+ol {
+  margin: 0 0 1.1rem;
+}
+
+ul,
+ol {
+  padding-left: 1.3rem;
+}
+
+li + li {
+  margin-top: 0.35rem;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 0.15em;
+}
+
+strong {
+  font-weight: 650;
+}
+
+code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--bg-sunken);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+pre {
+  overflow-x: auto;
+  margin: 0 0 1.1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--bg-sunken);
+}
+
+pre code {
+  padding: 0;
+  background: none;
+  font-size: 0.85rem;
+}
+
+blockquote {
+  margin: 0 0 1.1rem;
+  padding: 0.1rem 0 0.1rem 1rem;
+  border-left: 3px solid var(--rule);
+  color: var(--ink-muted);
+}
+
+hr {
+  margin: 2.5rem 0;
+  border: 0;
+  border-top: 1px solid var(--rule);
+}
+
+table {
+  width: 100%;
+  margin: 0 0 1.25rem;
+  border-collapse: collapse;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+}
+
+th {
+  color: var(--ink-muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ---------------------------------------------------------------- blocks */
+
+/* An aside that is worth stopping for: a warning, a reminder, a framing note. */
+.callout {
+  margin: 0 0 1.25rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow);
+}
+
+.callout > :last-child {
+  margin-bottom: 0;
+}
+
+.callout__title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Where a claim comes from. Inline, small, never in the way. */
+.source-note {
+  display: block;
+  margin: 0.35rem 0 0;
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+}
+
+/* A retrieval-practice prompt. Ticket #12 builds the interactive quiz on top of this. */
+.recall {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--rule);
+  border-radius: var(--radius);
+  background: var(--accent-wash);
+}
+
+.recall > :last-child {
+  margin-bottom: 0;
+}
+
+.recall__prompt {
+  margin: 0 0 0.6rem;
+  font-weight: 650;
+}
+
+/* Answers stay collapsed so recall happens before recognition. */
+.recall details summary {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.recall details[open] summary {
+  margin-bottom: 0.5rem;
+}
+
+/* ---------------------------------------------------------------- footer */
+
+.page-footer {
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+}
+
+.page-footer ul {
+  padding-left: 1.1rem;
+}
+
+/* ---------------------------------------------------------------- print */
+
+@media print {
+  /* Paper is white; ink is black. Screen theme is irrelevant to the printer. */
+  :root,
+  :root[data-theme="dark"] {
+    color-scheme: light;
+
+    --bg: #ffffff;
+    --bg-raised: #ffffff;
+    --bg-sunken: #ffffff;
+    --ink: #000000;
+    --ink-muted: #333333;
+    --ink-faint: #555555;
+    --rule: #999999;
+    --accent: #000000;
+    --accent-wash: #ffffff;
+    --shadow: none;
+  }
+
+  @page {
+    margin: 18mm 16mm;
+  }
+
+  body {
+    padding: 0;
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+
+  body > header,
+  body > main,
+  body > footer {
+    max-width: none;
+  }
+
+  .theme-toggle {
+    display: none;
+  }
+
+  .page-header {
+    padding-top: 0;
+  }
+
+  .callout,
+  .recall,
+  pre {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  /* Nothing hides an answer on paper: a printed page is reread, not worked through.
+     lesson.js opens every <details> before printing, and the toggle is then redundant.
+     Safari fires no beforeprint event, so the answer is also forced open in CSS; where
+     ::details-content isn't supported either, the summary stays visible rather than
+     printing a box whose answer has silently vanished. */
+  .recall details[open] > summary {
+    display: none;
+  }
+
+  .recall details::details-content {
+    content-visibility: visible;
+    block-size: auto;
+  }
+
+  /* A printed link is useless unless its target is printed with it. */
+  main a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+}

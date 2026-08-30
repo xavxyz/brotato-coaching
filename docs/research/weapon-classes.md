@@ -1,6 +1,7 @@
 # Research: weapon classes and their scaling
 
-Researched 2026-08-30 against installed **Brotato v1.1.15.4**. Source ids `WEAP-S1`–`WEAP-S18` and
+Researched 2026-08-30. Install is **Brotato 1.1.12.0.beta-3** (see `RESOURCES.md`);
+sources name their own patches, some newer. Source ids `WEAP-S1`–`WEAP-S18` and
 open questions `WEAP-Q1`–`WEAP-Q8` are defined in `RESOURCES.md`; read the access notes there
 before trusting a constant.
 

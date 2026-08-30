@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Placeholder lesson — Brotato coaching</title>
+    <link rel="stylesheet" href="../assets/lesson.css" />
+    <!-- Not deferred: the stored theme must be applied before the first paint. -->
+    <script src="../assets/lesson.js"></script>
+  </head>
+  <body>
+    <header class="page-header">
+      <div class="page-header__text">
+        <h1>Placeholder lesson</h1>
+        <p class="subtitle">
+          The shape every lesson takes. Copy this file, replace the content, change nothing
+          about the structure.
+        </p>
+        <p class="patch-stamp">Brotato 1.1.12.0.beta-3 · Steam build 23429717</p>
+      </div>
+      <button class="theme-toggle" hidden aria-label="Switch theme">
+        <span class="theme-toggle__icon" aria-hidden="true">◑</span>
+        <span class="theme-toggle__label"></span>
+      </button>
+    </header>
+
+    <main>
+      <p>
+        This page teaches nothing. It exists so that the workspace has a working example of
+        the shared stylesheet, the light/dark toggle and the print layout before the first
+        real lesson is written. Real lessons live beside it in this directory.
+      </p>
+
+      <div class="callout">
+        <p class="callout__title">Read this before or after a session, never during one</p>
+        <p>
+          Playing is hacking time. Nothing in this workspace asks for attention while a run is
+          in progress — see <code>NOTES.md</code>.
+        </p>
+      </div>
+
+      <h2>What a lesson is made of</h2>
+
+      <p>
+        A lesson is short, self-contained, and built around retrieval practice: it asks for an
+        answer from memory before it shows one. It is judged against the mission — Danger 5
+        solo on every archetype, by derivation rather than recall — and against nothing else.
+      </p>
+
+      <ol>
+        <li>A framing paragraph: what this concept lets you decide mid-run.</li>
+        <li>The model itself, in as few numbers as will carry it.</li>
+        <li>Recall prompts, answered from memory before the answer is revealed.</li>
+        <li>One source to read next, and the reference docs this builds on.</li>
+      </ol>
+
+      <h2>The parts the stylesheet gives you</h2>
+
+      <h3>A claim with its source</h3>
+
+      <p>
+        Brotato stores its save data as plain JSON, so this workspace can read progress
+        without a mod.
+        <span class="source-note"
+          >Source: the installed save file, <code>save_v3_0.json</code>, read directly. Every
+          claim in a real lesson carries a line like this.</span
+        >
+      </p>
+
+      <h3>A small table</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Element</th>
+            <th>Class</th>
+            <th>Used for</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Callout</td>
+            <td><code>.callout</code></td>
+            <td>An aside worth stopping for</td>
+          </tr>
+          <tr>
+            <td>Source note</td>
+            <td><code>.source-note</code></td>
+            <td>Where a claim comes from</td>
+          </tr>
+          <tr>
+            <td>Recall prompt</td>
+            <td><code>.recall</code></td>
+            <td>Retrieval practice</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>A recall prompt</h3>
+
+      <p>
+        Answer out loud, or on paper, before opening the answer. Recognising an answer is not
+        the same as producing one, and only one of the two survives to wave 12.
+      </p>
+
+      <div class="recall">
+        <p class="recall__prompt">
+          Which two zones are in scope for this workspace, and on which platform?
+        </p>
+        <details>
+          <summary>Show the answer</summary>
+          <p>
+            The base game and Abyssal Terrors, on PC / Steam under macOS. Both zones count;
+            progress is tracked per zone.
+          </p>
+        </details>
+      </div>
+
+      <div class="recall">
+        <p class="recall__prompt">
+          What does this workspace track as evidence that the coaching is working?
+        </p>
+        <details>
+          <summary>Show the answer</summary>
+          <p>
+            Prediction hit rate, scored per dimension in the prep drill — not win count. Wins
+            follow a better model; they do not measure one.
+          </p>
+        </details>
+      </div>
+
+      <h2>Printing</h2>
+
+      <p>
+        Print this page to check the print layout: the theme toggle disappears, the colours
+        drop to black on white whichever theme is on screen, and every collapsed answer above
+        is opened first so nothing is hidden on paper.
+      </p>
+
+      <h2>Ask follow-up questions</h2>
+
+      <p>
+        A lesson is one side of a conversation. Anything unclear here, or any claim that
+        disagrees with what the coach said, is worth putting to the agent directly — the
+        disagreement is the interesting part, and it belongs in <code>NOTES.md</code>.
+      </p>
+    </main>
+
+    <footer class="page-footer">
+      <p>Placeholder lesson · replaced by the first real lesson of the spine.</p>
+      <ul>
+        <li><a href="../MISSION.md">MISSION.md</a> — what this is all for</li>
+        <li><a href="../NOTES.md">NOTES.md</a> — standing preferences and the coach's heuristics</li>
+        <li><a href="../RESOURCES.md">RESOURCES.md</a> — the sources claims are cited from</li>
+      </ul>
+    </footer>
+  </body>
+</html>

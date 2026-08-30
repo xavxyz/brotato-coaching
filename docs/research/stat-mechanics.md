@@ -1,6 +1,7 @@
 # Research: stat mechanics and damage math
 
-Researched 2026-08-30 against installed **Brotato v1.1.15.4**. Source ids `STAT-S1`–`STAT-S20` and
+Researched 2026-08-30. Install is **Brotato 1.1.12.0.beta-3** (see `RESOURCES.md`);
+sources name their own patches, some newer. Source ids `STAT-S1`–`STAT-S20` and
 open questions `STAT-Q1`–`STAT-Q8` are defined in `RESOURCES.md`; read the access notes there
 before trusting a constant.
 
