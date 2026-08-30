@@ -8,12 +8,40 @@ the contract, and it is fixed before the implementations arrive.
 import argparse
 import sys
 from collections.abc import Sequence
+from dataclasses import dataclass, field
 
-_SUBCOMMANDS: dict[str, str] = {
-    "extract": "extract character modifiers, weapon stats and item effects from the installed game",
-    "progress": "report progress per character, deaths, purchases and lifetime totals from the save data",
-    "runs": "read the snapshots captured for a run",
-    "watch": "capture snapshots of live run state while a run is in progress",
+
+@dataclass(frozen=True)
+class _Flag:
+    name: str
+    help: str
+
+
+@dataclass(frozen=True)
+class _Subcommand:
+    help: str
+    flags: tuple[_Flag, ...] = field(default_factory=tuple)
+
+
+_SUBCOMMANDS: dict[str, _Subcommand] = {
+    "extract": _Subcommand(
+        help="extract character modifiers, weapon stats and item effects from the installed game",
+    ),
+    "progress": _Subcommand(
+        help="report progress per character, deaths, purchases and lifetime totals from the save data",
+    ),
+    "runs": _Subcommand(
+        help="read the snapshots captured for a run",
+    ),
+    "watch": _Subcommand(
+        help="capture snapshots of live run state while a run is in progress",
+        flags=(
+            _Flag(
+                name="--once",
+                help="take at most one snapshot and exit, rather than watching",
+            ),
+        ),
+    ),
 }
 
 
@@ -23,22 +51,24 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Read what Brotato writes to disk: save data, game data, and captured runs.",
     )
     subparsers = parser.add_subparsers(dest="subcommand", required=True)
-    for name, help_text in _SUBCOMMANDS.items():
-        subparser = subparsers.add_parser(name, help=help_text, description=help_text)
+    for name, subcommand in _SUBCOMMANDS.items():
+        subparser = subparsers.add_parser(
+            name, help=subcommand.help, description=subcommand.help
+        )
         subparser.set_defaults(subcommand=name)
-        if name == "watch":
-            subparser.add_argument(
-                "--once",
-                action="store_true",
-                help="take at most one snapshot and exit, rather than watching",
-            )
+        for flag in subcommand.flags:
+            subparser.add_argument(flag.name, action="store_true", help=flag.help)
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     arguments = parser.parse_args(argv)
-    raise SystemExit(f"brotato-coaching: {arguments.subcommand} is not implemented yet")
+    print(
+        f"brotato-coaching: {arguments.subcommand} is not implemented yet",
+        file=sys.stderr,
+    )
+    return 1
 
 
 if __name__ == "__main__":

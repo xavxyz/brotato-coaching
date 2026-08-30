@@ -1,1 +1,1 @@
-"""Implementation of :mod:`myproject.billing`. Private to the package."""
+"""Implementation of :mod:`brotato_coaching.billing`. Private to the package."""
