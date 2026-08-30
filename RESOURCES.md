@@ -17,6 +17,26 @@ source here is for *how the numbers work*, not *what the numbers are*.
 The installed version is the current live version. Nothing below is stale relative to this
 install *as a whole* — but individual sources lag the patch badly, and each row says by how much.
 
+**How these numbers were obtained**, so they can be re-derived when the patch moves. This is a
+hand check, not tooling — `extract` (#6) should supersede it:
+
+```sh
+# Version string, from the game's own pck. Prints "1.1.15.4" (and "1.1.13.2", a stale
+# leftover string in the same container — take the highest).
+grep -a -o -E '\b1\.[0-9]+\.[0-9]+\.[0-9]+\b' \
+  ~/Library/Application\ Support/Steam/steamapps/common/Brotato/Brotato.app/Contents/Resources/Brotato.pck \
+  | sort -u
+
+# Build id and install date, from Steam's manifest for app 1942280.
+grep -Ei 'buildid|lastupdated' \
+  ~/Library/Application\ Support/Steam/steamapps/appmanifest_1942280.acf
+date -r <lastupdated-epoch> -u +%Y-%m-%d
+```
+
+The DLC container (`BrotatoAbyssalTerrors.pck`) carries no version string; its presence on disk is
+all that is checked. The "latest live patch" row is not from disk — it comes from `SHOP-S13`, the
+official Steam announcements hub, read on 2026-08-30.
+
 ## How to read the trust column
 
 | Tier | Meaning |
@@ -25,6 +45,11 @@ install *as a whole* — but individual sources lag the patch badly, and each ro
 | **B** | Community wiki transcribing in-game tooltip strings and datamined tables. Reliable for mechanics, dated per page. |
 | **C** | Datamined calculators or spreadsheets that publish their coefficients **and** state the patch they parsed. Reliable only for the patch named. |
 | **D** | Written guides and measured trackers. Corroboration only; never the sole support for a claim. |
+
+Two rows carry a qualifier because official material was only reachable second-hand:
+**A (mirrored)** means a wiki or SteamDB transcription of official patch notes; **A (reproduced)**
+means an outlet reprinting the official notes verbatim. Both are official *content* via an
+unofficial *channel* — trust the substance, but see the access notes.
 
 ## Access notes — read before trusting anything below
 
@@ -112,9 +137,12 @@ Cited as `WAVE-Sn`; see `docs/research/wave-scaling.md`.
 | WAVE-S13 | [Ultimate guide to enemies and waves](https://gameplay.tips/guides/brotato-ultimate-guide-to-enemies-and-waves.html) | **2024-07-23**, pre-DLC | D | States its basis (Danger 5) and lists per-wave durations explicitly | Wave duration table, elite/horde gating |
 | WAVE-S14 | [GameSpot: co-op update and DLC](https://www.gamespot.com/articles/brotato-co-op-update-and-abyssal-terrors-dlc-are-out-now/) | 2024-10 | D | Reputable outlet; corroborates the DLC/1.1.0.0 release date | Release date |
 
-## Weapon archetypes
+## Weapon classes
 
-Cited as `WEAP-Sn`; see `docs/research/weapon-archetypes.md`.
+Ticket #4 calls this topic "weapon archetypes". `CONTEXT.md` reserves **archetype** for a family of
+*characters*, and the game itself calls these **classes** or **sets**, so the register uses "class".
+
+Cited as `WEAP-Sn`; see `docs/research/weapon-classes.md`.
 
 | Id | Source | Date / version | Trust | Why trusted | Covers |
 | --- | --- | --- | --- | --- | --- |
@@ -146,117 +174,114 @@ silent. Most resolve against extracted game data once ticket #6 lands — those 
 
 ### Stat mechanics
 
-1. **Is there a 12-attacks-per-second cap?** `STAT-S1` says "can't attack faster than 12 times per
+1. **STAT-Q1 — Is there a 12-attacks-per-second cap?** `STAT-S1` says "can't attack faster than 12 times per
    second"; `STAT-S18` repeats it. The dedicated Attack Speed page `STAT-S4` describes only
    per-weapon minimum cooldowns with *no* global cap, and the datamined formulas `STAT-S5`/`STAT-S6`
    contain no such constant. **→ #6**
-2. **How Attack Speed actually modifies the base cooldown timer.** Every source states the
+2. **STAT-Q2 — How Attack Speed actually modifies the base cooldown timer.** Every source states the
    "+100% = half cooldown" rule of thumb, but none publishes the expression. `STAT-S5`/`STAT-S6`
    give only the *displayed* cooldown text, whose `cooldown / 60` term carries no Attack Speed
    factor. `STAT-S17` names `weapon_service.gd` as the location without quoting it. **→ #6**
-3. **The negative Attack Speed formula is entirely undocumented.** Only two calibration points
+3. **STAT-Q3 — The negative Attack Speed formula is entirely undocumented.** Only two calibration points
    exist: at −100% AS a Tier 4 Fist attacks 14% less often, a Tier 4 Nuclear Launcher 46% less
    often (`STAT-S4`). **→ #6**
-4. **Order of operations for crit vs % Damage.** No source states whether crit multiplies before or
+4. **STAT-Q4 — Order of operations for crit vs % Damage.** No source states whether crit multiplies before or
    after the % Damage layer. The two commute in pure arithmetic, but 1.1.0.0 explicitly changed
    % Damage from floor to round (`STAT-S16`), so rounding makes the ordering observable. **→ #6**
-5. **Rounding of fractional flat scaling.** `STAT-S2`'s example uses clean numbers (30 × 0.8 = 24).
+5. **STAT-Q5 — Rounding of fractional flat scaling.** `STAT-S2`'s example uses clean numbers (30 × 0.8 = 24).
    Nothing documents what happens to e.g. 25 Melee × 85% = 21.25. **→ #6**
-6. **Is Luck a weapon scaling stat?** `STAT-S15` says some weapons scale damage with Luck;
+6. **STAT-Q6 — Is Luck a weapon scaling stat?** `STAT-S15` says some weapons scale damage with Luck;
    `STAT-S2`'s scaling-icon legend does not list Luck. Either the legend is incomplete or the claim
    covers only characters and items. **→ #6**
-7. **Datamined attack-speed constants are three and a half years old.** `STAT-S5`/`STAT-S6` are from
+7. **STAT-Q7 — Datamined attack-speed constants are three and a half years old.** `STAT-S5`/`STAT-S6` are from
    0.6.1.6 (Dec 2022) against a 1.1.15.4 install. The formula *shapes* are corroborated by
    present-day wiki text, but every constant should be treated as unverified. **→ #6**
-8. **Per-structure Engineering coefficients.** Only the Turret's `10 + (80% Engineering)` was
+8. **STAT-Q8 — Per-structure Engineering coefficients.** Only the Turret's `10 + (80% Engineering)` was
    confirmed against raw page source (`STAT-S10`); Landmines/Laser/Explosive/Incendiary/Medical come
    from a rendered table in the same wiki (`STAT-S8`). **→ #6**
 
 ### Shop economy
 
-9. **Reroll formula versus patch note.** `SHOP-S1` states `floor(0.75 × Wave)` base and
+1. **SHOP-Q1 — Reroll formula versus patch note.** `SHOP-S1` states `floor(0.75 × Wave)` base and
    `floor(0.40 × Wave)` increase; the 1.1.4.0 note describes the change as base `Wave → Wave/2` and
    increase `0.5 × Wave → 0.33 × Wave`. Probably reconciled by 1.1.7.1's "reroll price slightly
    increased", but the official bodies were unreadable. **→ #6**
-10. **The tier-chance formula does not reproduce the wiki's own tier table.** With Tier 2 at base 0%
+2. **SHOP-Q2 — The tier-chance formula does not reproduce the wiki's own tier table.** With Tier 2 at base 0%
     and 6%/wave, the stated formula yields 0% at wave 3 and 12% at wave 5; the table shows 12% and
     20%. The table's increments are 6,6,4,4,4… not a constant 6%. Trust the table over the formula
     until datamined. **→ #6**
-11. **Tier 2 chance at wave 20.** One reading gives 35% at wave 20 against 40% at wave 10, implying
+3. **SHOP-Q3 — Tier 2 chance at wave 20.** One reading gives 35% at wave 20 against 40% at wave 10, implying
     Tier 2 *falls* — which contradicts a monotonic formula. Possibly an effective probability after
     Tier 4 and Tier 3 are rolled first (`SHOP-S1` states tiers roll highest-first). **→ #6**
-12. **Does merging two weapons cost materials?** No source states a fee; none states it is free
+4. **SHOP-Q4 — Does merging two weapons cost materials?** No source states a fee; none states it is free
     either. `SHOP-S5` explicitly declines to say. **→ #6**
-13. **Recycling scope.** `SHOP-S1` says you recycle "Weapons and Items found in Crates". Whether
+5. **SHOP-Q5 — Recycling scope.** `SHOP-S1` says you recycle "Weapons and Items found in Crates". Whether
     shop-*purchased* items can be recycled later is not spelled out.
-14. **Is there a cap on materials held?** None found, but no page affirmatively says "no cap".
+6. **SHOP-Q6 — Is there a cap on materials held?** None found, but no page affirmatively says "no cap".
     Absence of evidence only.
-15. **Item base price is authored per item, not derived from tier.** `SHOP-S6` prices merely
+7. **SHOP-Q7 — Item base price is authored per item, not derived from tier.** `SHOP-S6` prices merely
     correlate with tier, and 1.1.15 retuned several freely (`SHOP-S14`). Any guide presenting a
     tier→price formula should be distrusted — noted so no lesson invents one.
 
 ### Wave and enemy scaling
 
-16. **Which Danger tier first adds enemy stats.** `WAVE-S2`'s body maps +12/+26/+40% to Danger
+1. **WAVE-Q1 — Which Danger tier first adds enemy stats.** `WAVE-S2`'s body maps +12/+26/+40% to Danger
     3/4/5, and `WAVE-S13` independently confirms Danger 5 = +40%. A search summary of the same wiki
     instead attributed +12% to Danger 1 and +26% to Danger 2. Two sources favour 3/4/5, and D0–D2
     being stat-neutral fits "new enemies" being D1/D2's stated modifier — but this is worth
     confirming in-game, and it matters, because it is the difference between Danger 4 and Danger 5
     being a 26→40% step or something else entirely.
-17. **Boss HP numbers do not reconcile.** `WAVE-S4` gives base 29,250 and "30,712 at Danger 5"
+2. **WAVE-Q2 — Boss HP numbers do not reconcile.** `WAVE-S4` gives base 29,250 and "30,712 at Danger 5"
     (≈ 29,250 × 1.4 × 0.75, i.e. the *two-boss* value); `WAVE-S13` gives 31,395 pre-DLC; `WAVE-S10`
     gives 37,950 per boss on Nightmare 1.1.15.3. Different patches and conditions, none stated
     precisely enough to reconcile. **Do not quote a single boss HP number.** **→ #6**
-18. **"Portal waves" / "abyss waves" appear not to exist.** No source describes such a mechanic.
+3. **WAVE-Q3 — "Portal waves" / "abyss waves" appear not to exist.** No source describes such a mechanic.
     Possibly a confusion with Curse or the Nightmare fog events. Flagged unresolved, not denied.
-19. **No global enemy-count formula is published.** `WAVE-S10`'s per-wave counts are empirical
+4. **WAVE-Q4 — No global enemy-count formula is published.** `WAVE-S10`'s per-wave counts are empirical
     observations from one modded run, not a rule. The only hard number is the 100-on-screen cap
     (`WAVE-S4`). **→ #6**
-20. **Does the Abyss use the same Danger multipliers as the Crash Zone?** No source confirms or
+5. **WAVE-Q5 — Does the Abyss use the same Danger multipliers as the Crash Zone?** No source confirms or
     denies it. Absence of a contrary statement suggests yes; that is inference, not documentation.
-21. **Nightmare wave-type arithmetic doesn't add up.** `WAVE-S10`/`WAVE-S11` report 3 darkness +
+6. **WAVE-Q6 — Nightmare wave-type arithmetic doesn't add up.** `WAVE-S10`/`WAVE-S11` report 3 darkness +
     7 bullet-hell + 6 normal = 16 against a 20-wave run. Unexplained.
-22. **`WAVE-S12`'s death distribution is unstamped and self-selected.** It aggregates every
+7. **WAVE-Q7 — `WAVE-S12`'s death distribution is unstamped and self-selected.** It aggregates every
     character, zone, Danger and mode with no version, from players who use a tracker app. The
     waves 6–7 spike (≈24% of deaths) is corroborated qualitatively by `WAVE-S11`, but do not treat
-    the percentages as measurements of *this* player's situation — the save file is the honest
+    the percentages as measurements of *this* player's situation — the save data is the honest
     source for that (ticket #5).
 
-### Weapon archetypes
+### Weapon classes
 
-23. **Support set bonus conflict.** `WEAP-S5` (Nov 2024) says +5/10/15/20/25 Harvesting;
+1. **WEAP-Q1 — Support set bonus conflict.** `WEAP-S5` (Nov 2024) says +5/10/15/20/25 Harvesting;
     `WEAP-S14` says +3/6/9/12/15. The wiki page is newer and more specific, but unconfirmed. **→ #6**
-24. **Set bonuses scale at 2/3/4/5/6 copies, not 2/4/6.** Recorded because the ticket's framing
+2. **WEAP-Q2 — Set bonuses scale at 2/3/4/5/6 copies, not 2/4/6.** Recorded because the ticket's framing
     assumed 2/4/6 — every per-class page and `WEAP-S14` agree on five steps.
-25. **Class → scaling-stat mapping is an inference.** No source publishes a "this class scales with
+3. **WEAP-Q3 — Class → scaling-stat mapping is an inference.** No source publishes a "this class scales with
     stat X" table, because **scaling is a per-weapon property, not a class property**. Any mapping
     in a lesson is derived from member weapon lists and must be labelled as such. **→ #6**
-26. **Weapon counts disagree:** 62 (`WEAP-S15`), 76 (`WEAP-S18`), 79 (`WEAP-S17`). Likely
+4. **WEAP-Q4 — Weapon counts disagree:** 62 (`WEAP-S15`), 76 (`WEAP-S18`), 79 (`WEAP-S17`). Likely
     base-game-only versus base+DLC, but none of them says which. **→ #6**
-27. **`WEAP-S2`, the aggregate class page, is stale** (July 2023): it omits Musical and Naval, and
+5. **WEAP-Q5 — `WEAP-S2`, the aggregate class page, is stale** (July 2023): it omits Musical and Naval, and
     its Blunt/Medieval numbers may predate later balance passes. Corroboration only.
-28. **Set-bonus values may have drifted between 1.1.6.3 and 1.1.15.4.** No patch note confirming
+6. **WEAP-Q6 — Set-bonus values may have drifted between 1.1.6.3 and 1.1.15.4.** No patch note confirming
     either way was readable. Assume some drift. **→ #6**
-29. **"Windup" is not a term the wiki uses.** It distinguishes melee *animation time* from cooldown
+7. **WEAP-Q7 — "Windup" is not a term the wiki uses.** It distinguishes melee *animation time* from cooldown
     (`WEAP-S10`) but publishes no per-weapon windup values. **→ #6**
-30. **`WEAP-S7`'s claim that all Naval weapons are Tier 2+** is single-sourced. **→ #6**
+8. **WEAP-Q8 — `WEAP-S7`'s claim that all Naval weapons are Tier 2+** is single-sourced. **→ #6**
 
 ### Cross-cutting
 
-31. **The official wiki was never read directly.** Every `B`-tier row rests on a mirror whose
+1. **CROSS-Q1 — The official wiki was never read directly.** Every `B`-tier row rests on a mirror whose
     fidelity was not verified. This is the single largest weakness in this register.
-32. **No official Blobfish page was read verbatim.** All Tier A rows are mirrors or reproductions.
+2. **CROSS-Q2 — No official Blobfish page was read verbatim.** All Tier A rows are mirrors or reproductions.
 
 ---
 
 ## Where the friend's heuristics go
 
-The friend (300+ hours, every character cleared at Danger 5) is the workspace's one wisdom source,
-and per `NOTES.md` their heuristics are recorded and attributed by name. **None have been captured
-yet.** Where a heuristic bears on a topic above, it belongs in `NOTES.md` next to that topic, and
-should be treated as a *hypothesis to test against these sources* — not as a source itself. The
-hooks are already stubbed in `NOTES.md`.
+Not here. A heuristic from the friend is a **hypothesis to test against this register**, not a row
+in it, so it lives in `NOTES.md` next to the topic it bears on — see that file for the hooks, the
+attribution rule, and the current state (**none captured yet**).
 
-This matters more than it looks: per the mission, the coached Danger 5 wins measure the friend's
-model, not the player's. Writing their heuristics down is how that model becomes transferable —
-and open question 16 above is exactly the kind of thing a 300-hour player answers in one sentence.
+`WAVE-Q1` above is the clearest example of why that capture is worth doing: it is exactly the kind
+of question a 300-hour player answers in one sentence.

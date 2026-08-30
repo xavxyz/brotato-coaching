@@ -41,7 +41,7 @@ one sentence, and it is the exact step this player is trying to close.
 
 ### On weapons and classes
 
-_Not yet captured._ See `docs/research/weapon-archetypes.md`. Worth asking about specifically: how
+_Not yet captured._ See `docs/research/weapon-classes.md`. Worth asking about specifically: how
 they decide a weapon's scaling is worth committing to, given that only 34 of 79 weapons gain
 anything from a single point of Melee Damage.
 
