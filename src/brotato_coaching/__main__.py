@@ -15,7 +15,7 @@ import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from brotato_coaching.gamedata import (
     UNKNOWN_VERSION,
@@ -23,7 +23,9 @@ from brotato_coaching.gamedata import (
     extract,
     find_install,
     read_names,
+    read_version,
 )
+from brotato_coaching.review import DamagedRecord, HypothesisMissing, Reviews
 from brotato_coaching.savefile import (
     SaveDirectoryUnavailable,
     SaveUnavailable,
@@ -61,6 +63,11 @@ def _run_log() -> RunLog:
         runs_directory=_settings.runs_directory(),
         poll_interval=_settings.poll_interval(),
     )
+
+
+def _reviews() -> Reviews:
+    """The one way to build a `Reviews`: `records/`, and nothing else."""
+    return Reviews(records_directory=_settings.records_directory())
 
 
 def _emit(payload: object, *, streaming: bool = False) -> int:
@@ -177,12 +184,133 @@ def _runs(arguments: argparse.Namespace) -> int:
     try:
         return _emit(run_log.snapshots(arguments.run_id))
     except UnknownRun:
-        print(
-            f"brotato-coaching: no run captured with id {arguments.run_id!r}; "
-            "`brotato-coaching runs` lists the ones there are",
-            file=sys.stderr,
+        return _unknown_run(arguments.run_id)
+
+
+def _review(arguments: argparse.Namespace) -> int:
+    """Brief, hypothesise, diagnose — in that order, which is enforced here.
+
+    With no flag this reports the run and concludes nothing, because the
+    player's read has to be committed against evidence rather than against an
+    opinion they can quietly agree with. `--hypothesis` writes that read;
+    `--diagnosis` is refused until it exists.
+
+    A diagnosis does not need the snapshots, only the record it is being added
+    to, so it is answered before a 6 MB run is read back off disk.
+    """
+    if arguments.hypothesis is not None and arguments.diagnosis is not None:
+        return _refuse(
+            "a hypothesis and a diagnosis cannot be recorded in one go; "
+            "the order between them is the point"
         )
-        return 1
+    if (arguments.diagnosis is None) != (arguments.change is None):
+        return _refuse(
+            "--diagnosis and --change go together: every review ends with "
+            "exactly one change to try next time"
+        )
+
+    run_log = _run_log()
+    reviews = _reviews()
+    run_id = arguments.run_id or _latest_run(run_log)
+    if run_id is None:
+        return _emit(
+            {
+                "reviewed": False,
+                "reason": "no-runs-captured",
+                "runs_dir": str(_settings.runs_directory()),
+            }
+        )
+
+    if arguments.diagnosis is not None:
+        try:
+            return _emit(
+                reviews.diagnose(
+                    run_id, diagnosis=arguments.diagnosis, change=arguments.change
+                )
+            )
+        except HypothesisMissing:
+            return _refuse(
+                f"no hypothesis is on record for {run_id}; write your own read "
+                "of the run first with `review --hypothesis`, and only then "
+                "diagnose — re-diagnosing a run needs a fresh hypothesis too"
+            )
+        except DamagedRecord as damaged:
+            return _refuse(str(damaged))
+
+    try:
+        run = run_log.snapshots(run_id)
+    except UnknownRun:
+        return _unknown_run(run_id)
+    context = _run_context()
+    try:
+        briefing = reviews.briefing(
+            run,
+            patch=context.patch,
+            death_causes=context.death_causes,
+            death_causes_reason=context.death_causes_reason,
+        )
+        if arguments.hypothesis is not None:
+            return _emit(reviews.record_hypothesis(briefing, arguments.hypothesis))
+    except DamagedRecord as damaged:
+        return _refuse(str(damaged))
+    return _emit(briefing)
+
+
+def _records(_arguments: argparse.Namespace) -> int:
+    """Every reviewed run, and what keeps recurring across them."""
+    return _emit(_reviews().records())
+
+
+class _RunContext(NamedTuple):
+    """The answers a briefing needs that the run itself cannot give."""
+
+    patch: str | None
+    death_causes: tuple[dict[str, Any], ...]
+    death_causes_reason: str | None
+
+
+def _run_context() -> _RunContext:
+    """The patch, and what the save says has been killing this player.
+
+    Both are joins between packages, and so are made here. Neither is required:
+    a review of a run on a machine with no extraction and no save is still a
+    review, and says so rather than failing.
+    """
+    patch = read_version(_settings.data_directory())
+    stamped = None if patch == UNKNOWN_VERSION else patch
+    try:
+        progress = read_progress(save_file())
+    except (SaveUnavailable, SaveDirectoryUnavailable) as unavailable:
+        return _RunContext(stamped, (), str(unavailable))
+    name_for = read_names(_settings.data_directory()).name_for
+    return _RunContext(
+        patch=stamped,
+        death_causes=tuple(
+            {"enemy": name_for(identifier) or str(identifier), "deaths": deaths}
+            for identifier, deaths in progress.deaths.items()
+        ),
+        death_causes_reason=None,
+    )
+
+
+def _latest_run(run_log: RunLog) -> str | None:
+    """The run a review is about when the player does not name one."""
+    captured = run_log.runs()["runs"]
+    return str(captured[-1]["run_id"]) if captured else None
+
+
+def _refuse(message: str) -> int:
+    print(f"brotato-coaching: {message}", file=sys.stderr)
+    return 1
+
+
+def _unknown_run(run_id: str) -> int:
+    print(
+        f"brotato-coaching: no run captured with id {run_id!r}; "
+        "`brotato-coaching runs` lists the ones there are",
+        file=sys.stderr,
+    )
+    return 1
 
 
 _SUBCOMMANDS: dict[str, _Subcommand] = {
@@ -205,6 +333,36 @@ _SUBCOMMANDS: dict[str, _Subcommand] = {
     "progress": _Subcommand(
         help="report progress per character, deaths, purchases and lifetime totals from the save data",
         handler=_progress,
+    ),
+    "review": _Subcommand(
+        help="review a dead run: brief, record the hypothesis, then diagnose",
+        handler=_review,
+        arguments=(
+            _Argument(
+                name="run_id",
+                help="a run id from `runs`; omit to review the most recent run",
+                options={"nargs": "?", "default": None},
+            ),
+            _Argument(
+                name="--hypothesis",
+                help="your one-line read of what went wrong, recorded before any diagnosis",
+                options={"metavar": "TEXT", "default": None},
+            ),
+            _Argument(
+                name="--diagnosis",
+                help="what actually went wrong; refused until a hypothesis is recorded",
+                options={"metavar": "TEXT", "default": None},
+            ),
+            _Argument(
+                name="--change",
+                help="the one change to try next time; required with --diagnosis",
+                options={"metavar": "TEXT", "default": None},
+            ),
+        ),
+    ),
+    "records": _Subcommand(
+        help="every reviewed run, and the failure patterns that recur across them",
+        handler=_records,
     ),
     "runs": _Subcommand(
         help="list captured runs, or read the snapshots captured for one run",

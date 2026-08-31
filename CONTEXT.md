@@ -100,6 +100,21 @@ The written outcome of reviewing one run: what happened, the player's hypothesis
 diagnosis, and the single change to try next.
 _Avoid_: report, post-mortem, review
 
+**Briefing**:
+Everything the snapshots say about a run, with nothing concluded from it. What the
+player's hypothesis is written against, and the reason a review can state no diagnosis
+before that hypothesis exists.
+_Avoid_: summary, analysis, readout
+
+**Hypothesis**:
+The player's own one-line read of what ended a run, written before any diagnosis. Its
+value is entirely in having been committed first.
+_Avoid_: theory, guess, hunch
+
+**Diagnosis**:
+What the data says ended a run, written only after the hypothesis. One cause, not a list.
+_Avoid_: analysis, verdict, root cause
+
 **Prediction**:
 A committed answer given before a reveal in a prep drill. Scored individually, and tracked
 over time as the measure of whether the coaching works.
