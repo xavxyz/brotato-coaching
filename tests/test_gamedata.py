@@ -536,7 +536,7 @@ def test_an_install_missing_a_container_names_only_the_zone_it_has(
 
 
 def test_the_hash_is_the_one_the_game_wrote_into_the_save() -> None:
-    """Fixed values, read off the committed real save. See ADR 0002."""
+    """Fixed values, read off the committed real save. See ADR 0003."""
     assert godot_hash("character_mage") == 904328779
     assert godot_hash("lamprey") == 1737060255
     assert godot_hash("") == 5381

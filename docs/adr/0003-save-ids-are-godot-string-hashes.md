@@ -1,4 +1,4 @@
-# ADR-0002: Save ids are Godot string hashes of `my_id`
+# ADR-0003: Save ids are Godot string hashes of `my_id`
 
 **Status:** accepted
 **Date:** 2026-08-31

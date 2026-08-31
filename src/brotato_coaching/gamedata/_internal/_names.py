@@ -4,7 +4,7 @@ Brotato stores an entity in a save as a 32-bit integer rather than as its id:
 `killed_by_enemies` is keyed by `1737060255`, not by `lamprey`. The integer is
 Godot 3's `String.hash()` — the djb2 variant below — applied to the entity's
 `my_id`, and nothing else: not the resource path, not the translation key. See
-`docs/adr/0002-save-ids-are-godot-string-hashes.md` for how that was pinned down
+`docs/adr/0003-save-ids-are-godot-string-hashes.md` for how that was pinned down
 and what was ruled out.
 
 Nothing here reaches for the game. A `NameBook` is built from what `extract`

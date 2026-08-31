@@ -145,7 +145,7 @@ def test_no_two_extracted_ids_hash_to_the_same_integer(extracted: Path) -> None:
     """What lets a hash name exactly one thing — asserted, not assumed.
 
     A collision between two different ids would be silent: the book keeps one
-    and the other becomes unnameable. ADR-0002 rests on there being none.
+    and the other becomes unnameable. ADR-0003 rests on there being none.
 
     Two *resources* sharing one id is a different matter and does happen — the
     DLC ships a second `evil_mob` — but they hash alike because they are named
