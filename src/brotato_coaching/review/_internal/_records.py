@@ -32,6 +32,7 @@ _FACTS = (
     "patch",
     "waves",
     "weapons",
+    "items",
     "key_items",
     "final_stats",
     "death_causes",
@@ -39,7 +40,17 @@ _FACTS = (
 
 
 class HypothesisMissing(Exception):
-    """A diagnosis was offered for a run whose hypothesis is not yet written."""
+    """No hypothesis is on record that has not already been diagnosed.
+
+    Covers both ways the ordering can be broken: diagnosing a run nobody has
+    written a read of, and diagnosing one a second time without committing to a
+    fresh read first. They are one rule — a diagnosis follows a hypothesis that
+    was written without sight of it — so they are one exception.
+    """
+
+
+class DamagedRecord(Exception):
+    """A record exists but will not parse, so writing would destroy it."""
 
 
 @dataclass(frozen=True)
@@ -49,14 +60,23 @@ class Records:
     directory: Path
 
     def read(self, run_id: str) -> dict[str, Any] | None:
+        """The record for a run, or `None` if it has never been reviewed.
+
+        A file that exists but will not parse raises rather than reading as
+        "never reviewed": that answer would have the next hypothesis silently
+        overwrite a record the player had damaged by hand, and a record is data
+        that only exists here.
+        """
         path = self._path(run_id)
         if not path.is_file():
             return None
         try:
             record = json.loads(path.read_text())
-        except ValueError:
-            return None
-        return record if isinstance(record, dict) else None
+        except ValueError as error:
+            raise DamagedRecord(f"{path} is not readable JSON: {error}") from error
+        if not isinstance(record, dict):
+            raise DamagedRecord(f"{path} does not hold a run record")
+        return record
 
     def write_hypothesis(self, facts: dict[str, Any], text: str) -> dict[str, Any]:
         """Record the player's read of the run, and only then open it to diagnosis.
@@ -94,49 +114,32 @@ class Records:
         if record is None or record.get("hypothesis") is None:
             raise HypothesisMissing(run_id)
         if record.get("diagnosis") is not None:
-            # Already diagnosed: a second diagnosis would be one written after
-            # this one had been read, which is the ordering this refuses.
+            # Already diagnosed, so the hypothesis on record was written before
+            # a diagnosis this player has now seen. Re-diagnosing needs a fresh
+            # one; that is the same rule, not a second one.
             raise HypothesisMissing(run_id)
         record["diagnosis"] = _said(diagnosis)
         record["change"] = _said(change)
         return self._write(record)
 
     def all(self) -> list[dict[str, Any]]:
-        """Every record, oldest run first — run ids sort by when they started."""
+        """Every readable record, oldest run first — ids sort by start time.
+
+        A damaged file is skipped here rather than raised: listing what has been
+        reviewed is a question the other records can still answer, and the one
+        that cannot is loud the moment it is reviewed again.
+        """
         if not self.directory.is_dir():
             return []
         records = []
         for path in sorted(self.directory.glob("*.json")):
-            record = self.read(path.stem)
+            try:
+                record = self.read(path.stem)
+            except DamagedRecord:
+                continue
             if record is not None:
                 records.append({**record, "complete": _complete(record)})
         return records
-
-    def patterns(self, records: list[dict[str, Any]]) -> dict[str, Any]:
-        """What only several records can say: what keeps happening.
-
-        Death causes are the player's *lifetime* histogram out of the save, so
-        they are reported from the most recent record rather than summed across
-        records, which would count the same deaths once per review.
-        """
-        latest = records[-1] if records else None
-        return {
-            "runs_reviewed": len(records),
-            "by_character": _counts(record.get("character") for record in records),
-            "by_danger": _counts(record.get("danger") for record in records),
-            "by_final_wave": _counts(
-                (record.get("waves") or {}).get("reached") for record in records
-            ),
-            "changes": [
-                {"text": text, "count": count}
-                for text, count in Counter(
-                    record["change"]["text"]
-                    for record in records
-                    if record.get("change")
-                ).most_common()
-            ],
-            "latest_death_causes": (latest or {}).get("death_causes") or [],
-        }
 
     def _write(self, record: dict[str, Any]) -> dict[str, Any]:
         self.directory.mkdir(parents=True, exist_ok=True)
@@ -147,6 +150,51 @@ class Records:
 
     def _path(self, run_id: str) -> Path:
         return self.directory / f"{run_id}.json"
+
+
+def patterns(records: list[dict[str, Any]]) -> dict[str, Any]:
+    """What only several records can say: what keeps happening.
+
+    Death causes are the player's *lifetime* histogram out of the save, so they
+    are reported from the most recent record rather than summed across records,
+    which would count the same deaths once per review.
+    """
+    latest = records[-1] if records else None
+    return {
+        "runs_reviewed": len(records),
+        "by_character": _counts(record.get("character") for record in records),
+        "by_danger": _counts(record.get("danger") for record in records),
+        "by_final_wave": _counts(
+            (record.get("waves") or {}).get("reached") for record in records
+        ),
+        "repeated_deaths": _repeated_deaths(records),
+        "changes": [
+            {"text": text, "count": count}
+            for text, count in Counter(
+                record["change"]["text"] for record in records if record.get("change")
+            ).most_common()
+        ],
+        "latest_death_causes": (latest or {}).get("death_causes") or [],
+    }
+
+
+def _repeated_deaths(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The same character dying at the same wave, more than once.
+
+    The joint count, not two histograms a reader has to cross-reference: "you
+    have died this way four times" is one number, and a character histogram
+    beside a wave histogram cannot produce it.
+    """
+    counted = Counter(
+        (record.get("character"), (record.get("waves") or {}).get("reached"))
+        for record in records
+        if record.get("character") is not None
+    )
+    return [
+        {"character": character, "wave": wave, "count": count}
+        for (character, wave), count in counted.most_common()
+        if count > 1
+    ]
 
 
 def _blank() -> dict[str, Any]:

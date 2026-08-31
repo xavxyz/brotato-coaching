@@ -23,10 +23,15 @@ played on and what the save says has been killing the player. Composing those is
 the app tier's job: this package knows how to read a run, not where runs, saves
 and game data live.
 
+`HypothesisMissing` is the ordering rule refusing: no hypothesis is on record
+that has not already been diagnosed. `DamagedRecord` is a record on disk that
+will not parse — raised rather than treated as an unreviewed run, because the
+alternative is quietly overwriting the only copy of it.
+
 Records are the player's own writing about their own data, and commit.
 """
 
-from ._internal._records import HypothesisMissing
+from ._internal._records import DamagedRecord, HypothesisMissing
 from ._internal._reviews import Reviews
 
-__all__ = ["HypothesisMissing", "Reviews"]
+__all__ = ["DamagedRecord", "HypothesisMissing", "Reviews"]

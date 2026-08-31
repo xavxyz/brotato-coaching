@@ -59,7 +59,7 @@ uv run brotato watch --stop             # stop it, and report the session it jus
 uv run brotato watch --once             # make a single capture decision and exit
 ```
 
-`review` is the post-mortem loop, and it has an order it will not let you break:
+`review` reads a dead run back, and it has an order it will not let you break:
 
 ```sh
 uv run brotato review                                        # the briefing: what happened, nothing concluded

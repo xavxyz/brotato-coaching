@@ -68,14 +68,18 @@ def weapons(state: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 
 def items(state: Mapping[str, Any]) -> dict[str, int]:
-    """How many of each item is held, the character's own entry left out."""
+    """How many of each item is held, the character's own entry left out.
+
+    Every item, commonest first. `key_items` is a shortlist drawn from this, and
+    a reader who wants the item held once has to have somewhere to find it.
+    """
     counted: dict[str, int] = {}
     for item in _list(_player(state).get("items")):
         identifier = _text(item.get("my_id"))
         if identifier is None or identifier.startswith(_CHARACTER_PREFIX):
             continue
         counted[identifier] = counted.get(identifier, 0) + 1
-    return counted
+    return dict(sorted(counted.items(), key=lambda pair: (-pair[1], pair[0])))
 
 
 def key_items(state: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -94,16 +98,19 @@ def key_items(state: Mapping[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
-def final_stats(state: Mapping[str, Any]) -> dict[str, int]:
+def final_stats(state: Mapping[str, Any]) -> dict[str, float]:
     """The reported stats, read back out of the hashed `effects` map."""
     effects = _player(state).get("effects")
     if not isinstance(effects, Mapping):
         return {}
-    resolved = {}
+    resolved: dict[str, float] = {}
     for key, stat in _STAT_BY_HASH.items():
         value = effects.get(key)
         if isinstance(value, (int, float)) and not isinstance(value, bool):
-            resolved[stat] = int(value)
+            # Reported as written. The game has only ever been seen to write
+            # whole numbers here, but rounding a stat a player is arguing about
+            # is not a liberty worth taking on that evidence.
+            resolved[stat] = int(value) if float(value).is_integer() else float(value)
     return resolved
 
 

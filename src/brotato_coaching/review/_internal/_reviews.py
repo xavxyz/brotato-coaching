@@ -1,4 +1,4 @@
-"""The post-mortem loop: brief, then hypothesise, then diagnose.
+"""Reviewing a run: brief, then hypothesise, then diagnose.
 
 One class holds the three, because they are one workflow and the order they
 happen in is the behaviour worth protecting.
@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from . import _build
-from ._records import HypothesisMissing, Records
+from ._records import Records, patterns
 
 
 class Reviews:
@@ -79,7 +79,7 @@ class Reviews:
         return {
             "records_dir": str(self._records.directory),
             "records": records,
-            "patterns": self._records.patterns(records),
+            "patterns": patterns(records),
         }
 
     def _facts(
@@ -103,38 +103,48 @@ class Reviews:
                 "of": _build.wave_count(final),
             },
             "weapons": _build.weapons(final),
+            # Both, and not only the stacked ones: an item held once can be the
+            # item that defined the build, and a record that dropped it could
+            # not be re-diagnosed later. `key_items` is the shortlist a reader
+            # starts from, `items` is what it was drawn out of.
+            "items": _build.items(final),
             "key_items": _build.key_items(final),
             "final_stats": _build.final_stats(final),
             "death_causes": [dict(cause) for cause in death_causes],
         }
 
 
-def _states(run: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+def _snapshots(run: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    """The run's snapshots, oldest first, minus anything malformed.
+
+    One walk of the document, guarded once: everything else here reads runs
+    through this, so a snapshot shaped unexpectedly is skipped in exactly one
+    place rather than in three that could disagree.
+    """
     return [
-        snapshot["state"]
+        snapshot
         for snapshot in run.get("snapshots") or []
         if isinstance(snapshot, Mapping) and isinstance(snapshot.get("state"), Mapping)
     ]
 
 
+def _states(run: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    return [snapshot["state"] for snapshot in _snapshots(run)]
+
+
 def _waves(run: Mapping[str, Any]) -> list[int]:
     return [
         snapshot["wave"]
-        for snapshot in run.get("snapshots") or []
-        if isinstance(snapshot, Mapping) and isinstance(snapshot.get("wave"), int)
+        for snapshot in _snapshots(run)
+        if isinstance(snapshot.get("wave"), int)
     ]
 
 
 def _curve(run: Mapping[str, Any]) -> list[dict[str, Any]]:
     """One entry per wave, taken from the last snapshot captured in that wave."""
     by_wave: dict[int, dict[str, Any]] = {}
-    for snapshot in run.get("snapshots") or []:
-        if not isinstance(snapshot, Mapping) or not isinstance(snapshot.get("state"), Mapping):
-            continue
+    for snapshot in _snapshots(run):
         entry = _build.curve_entry(snapshot["state"])
         if entry["wave"] is not None:
             by_wave[entry["wave"]] = entry
     return [by_wave[wave] for wave in sorted(by_wave)]
-
-
-__all__ = ["HypothesisMissing", "Reviews"]

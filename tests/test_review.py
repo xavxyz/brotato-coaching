@@ -85,6 +85,15 @@ class TestBriefing:
 
         assert briefing["key_items"] == [{"id": "item_hedgehog", "count": 2}]
 
+    def test_an_item_held_once_is_still_in_the_briefing(
+        self, workspace: Workspace
+    ) -> None:
+        a_run(workspace, items=("item_hedgehog", "item_hedgehog", "item_scar"))
+
+        briefing = workspace.json_cli("review")
+
+        assert briefing["items"] == {"item_hedgehog": 2, "item_scar": 1}
+
     def test_final_stats_are_read_back_out_of_the_hashed_effects(
         self, workspace: Workspace
     ) -> None:
@@ -271,6 +280,7 @@ class TestOrdering:
             "patch",
             "waves",
             "weapons",
+            "items",
             "key_items",
             "final_stats",
             "death_causes",
@@ -342,6 +352,19 @@ class TestOrdering:
         assert [revision["diagnosis"]["text"] for revision in again["revisions"]] == [
             "damage flat from wave 9"
         ]
+
+    def test_a_damaged_record_is_reported_rather_than_overwritten(
+        self, workspace: Workspace
+    ) -> None:
+        a_run(workspace)
+        workspace.json_cli("review", "--hypothesis", "ran out of damage")
+        (record,) = records_in(workspace)
+        record.write_text("{ this is not json")
+
+        result = workspace.cli("review", "--hypothesis", "second thoughts")
+
+        assert result.returncode != 0
+        assert record.read_text() == "{ this is not json"
 
     def test_a_hypothesis_can_be_corrected_before_the_diagnosis_lands(
         self, workspace: Workspace
@@ -415,6 +438,10 @@ class TestRecords:
         assert patterns["runs_reviewed"] == 3
         assert patterns["by_character"]["character_crazy"] == 2
         assert patterns["by_final_wave"]["2"] == 3
+        # The joint count, which is what "you have died this way twice" means.
+        assert patterns["repeated_deaths"] == [
+            {"character": "character_crazy", "wave": 2, "count": 2}
+        ]
 
     def test_a_run_reviewed_only_as_far_as_the_hypothesis_is_marked_incomplete(
         self, workspace: Workspace

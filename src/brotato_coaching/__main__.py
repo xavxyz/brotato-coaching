@@ -15,7 +15,7 @@ import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from brotato_coaching.gamedata import (
     UNKNOWN_VERSION,
@@ -25,7 +25,7 @@ from brotato_coaching.gamedata import (
     read_names,
     read_version,
 )
-from brotato_coaching.review import HypothesisMissing, Reviews
+from brotato_coaching.review import DamagedRecord, HypothesisMissing, Reviews
 from brotato_coaching.savefile import (
     SaveDirectoryUnavailable,
     SaveUnavailable,
@@ -234,14 +234,25 @@ def _review(arguments: argparse.Namespace) -> int:
                 "of the run first with `review --hypothesis`, and only then "
                 "diagnose — re-diagnosing a run needs a fresh hypothesis too"
             )
+        except DamagedRecord as damaged:
+            return _refuse(str(damaged))
 
     try:
         run = run_log.snapshots(run_id)
     except UnknownRun:
         return _unknown_run(run_id)
-    briefing = reviews.briefing(run, **_run_context())
-    if arguments.hypothesis is not None:
-        return _emit(reviews.record_hypothesis(briefing, arguments.hypothesis))
+    context = _run_context()
+    try:
+        briefing = reviews.briefing(
+            run,
+            patch=context.patch,
+            death_causes=context.death_causes,
+            death_causes_reason=context.death_causes_reason,
+        )
+        if arguments.hypothesis is not None:
+            return _emit(reviews.record_hypothesis(briefing, arguments.hypothesis))
+    except DamagedRecord as damaged:
+        return _refuse(str(damaged))
     return _emit(briefing)
 
 
@@ -250,32 +261,36 @@ def _records(_arguments: argparse.Namespace) -> int:
     return _emit(_reviews().records())
 
 
-def _run_context() -> dict[str, Any]:
-    """The two answers a briefing needs that the run itself cannot give.
+class _RunContext(NamedTuple):
+    """The answers a briefing needs that the run itself cannot give."""
 
-    The patch its numbers were true for, and what the save says has been killing
-    this player. Both are joins between packages, and so are made here. Neither
-    is required: a review of a run on a machine with no extraction and no save
-    is still a review, and says so rather than failing.
+    patch: str | None
+    death_causes: tuple[dict[str, Any], ...]
+    death_causes_reason: str | None
+
+
+def _run_context() -> _RunContext:
+    """The patch, and what the save says has been killing this player.
+
+    Both are joins between packages, and so are made here. Neither is required:
+    a review of a run on a machine with no extraction and no save is still a
+    review, and says so rather than failing.
     """
     patch = read_version(_settings.data_directory())
+    stamped = None if patch == UNKNOWN_VERSION else patch
     try:
         progress = read_progress(save_file())
     except (SaveUnavailable, SaveDirectoryUnavailable) as unavailable:
-        return {
-            "patch": None if patch == UNKNOWN_VERSION else patch,
-            "death_causes": (),
-            "death_causes_reason": str(unavailable),
-        }
+        return _RunContext(stamped, (), str(unavailable))
     name_for = read_names(_settings.data_directory()).name_for
-    return {
-        "patch": None if patch == UNKNOWN_VERSION else patch,
-        "death_causes": [
+    return _RunContext(
+        patch=stamped,
+        death_causes=tuple(
             {"enemy": name_for(identifier) or str(identifier), "deaths": deaths}
             for identifier, deaths in progress.deaths.items()
-        ],
-        "death_causes_reason": None,
-    }
+        ),
+        death_causes_reason=None,
+    )
 
 
 def _latest_run(run_log: RunLog) -> str | None:

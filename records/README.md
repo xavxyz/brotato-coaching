@@ -22,7 +22,8 @@ model has improved.
 | `run_id`, `character`, `danger`, `zone` | Which run this was. |
 | `patch` | The game version `data/` was extracted from, or `null` if it was never extracted. |
 | `waves` | `reached` and `of` — where the run stopped, out of how many. |
-| `weapons`, `key_items` | The build as it ended: weapons by id and tier, items the player stacked. |
+| `weapons` | The build's weapons as it ended, by id and tier the player saw (I–IV). |
+| `items`, `key_items` | Every item held with its count, and the shortlist of the ones held more than once — the stacking is the decision, but an item held once can still be the one that defined the run. |
 | `final_stats` | The reported stats, read back out of the game's hashed `effects` map. |
 | `death_causes` | The save's lifetime death histogram at the time of the review. |
 | `hypothesis` | The player's one-line read, and when it was written. |

@@ -79,9 +79,10 @@ Then check whether this is a repeat:
 uv run brotato records
 ```
 
-Mention a pattern only when it actually recurs — the same change proposed twice,
-the same character dying at the same wave three times. `patterns` counts it for
-you; do not editorialise a single data point into a trend.
+Mention a pattern only when it actually recurs. `patterns` counts it for you:
+`changes` for a change proposed more than once, `repeated_deaths` for the same
+character dying at the same wave more than once, and `latest_death_causes` for
+the save's own histogram. Do not editorialise a single data point into a trend.
 
 ## 6. Propose a learning record — only if the model changed
 
