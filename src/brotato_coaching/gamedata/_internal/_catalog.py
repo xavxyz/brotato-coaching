@@ -17,8 +17,10 @@ mechanical numbers are what the catalogues exist for.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from ._container import Container
@@ -61,16 +63,63 @@ CATALOGUE_NAMES = ("characters", "weapons", "items", "enemies")
 
 @dataclass(frozen=True)
 class Catalog:
-    """Every extracted entity, keyed by the file it will be written to."""
+    """Every extracted entity, keyed by the file it will be written to.
+
+    `game_version` is the patch the entities were read from. It is `None` for a
+    catalogue that has just been built — the version belongs to the install, and
+    is stamped on as it is written — and carries the stamp back when one is read
+    off disk, so nothing downstream has to quote a number without its patch.
+    """
 
     characters: list[dict[str, Any]]
     weapons: list[dict[str, Any]]
     items: list[dict[str, Any]]
     enemies: list[dict[str, Any]]
+    game_version: str | None = None
 
     def by_name(self) -> tuple[tuple[str, list[dict[str, Any]]], ...]:
         """Each catalogue, under the name its file is written as."""
         return tuple((name, getattr(self, name)) for name in CATALOGUE_NAMES)
+
+
+def read_catalog(directory: Path) -> Catalog:
+    """The catalogues `extract` wrote, read back out of `directory`.
+
+    A missing directory, a missing catalogue or a file the player has damaged
+    contributes an empty list rather than raising, the same bargain `read_names`
+    strikes: a caller finds out there is nothing to read by asking whether the
+    catalogue is empty, not by catching something.
+    """
+    documents = {
+        name: read_catalogue(directory / f"{name}.json", name)
+        for name in CATALOGUE_NAMES
+    }
+    return Catalog(
+        **{name: entities for name, (entities, _) in documents.items()},
+        game_version=next(
+            (version for _, version in documents.values() if version), None
+        ),
+    )
+
+
+def read_catalogue(
+    path: Path, name: str
+) -> tuple[list[dict[str, Any]], str | None]:
+    """One catalogue file, as its entities and the patch it was stamped with."""
+    try:
+        document = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return [], None
+    if not isinstance(document, dict):
+        return [], None
+    entities = document.get(name)
+    version = document.get("game_version")
+    return (
+        [entity for entity in entities if isinstance(entity, dict)]
+        if isinstance(entities, list)
+        else [],
+        version if isinstance(version, str) else None,
+    )
 
 
 @dataclass(frozen=True)

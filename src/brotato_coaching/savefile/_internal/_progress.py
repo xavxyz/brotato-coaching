@@ -83,6 +83,20 @@ class Progress:
     deaths: Mapping[int, int]
     purchases: Mapping[int, int]
 
+    @property
+    def cleared_characters(self) -> frozenset[str]:
+        """Every character this player has ever cleared, in any zone.
+
+        The save records the best danger *beaten* per character and nothing
+        about attempts that went nowhere, so this is the only evidence in the
+        file that a character's reasoning has been done.
+        """
+        return frozenset(
+            character.character_id
+            for character in self.characters
+            if character.cleared
+        )
+
     def as_json_object(
         self, name_for: Callable[[int], str | None] | None = None
     ) -> dict[str, Any]:
