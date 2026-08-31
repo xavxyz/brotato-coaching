@@ -37,8 +37,12 @@ _NOTHING_CAPTURED = (
 # waits for it to let go. Both are process handshakes, not game-speed waits.
 _HANDSHAKE_TIMEOUT = 10.0
 
+# What a session is worth reporting. `live_state_path` is among them because the
+# watcher recorded the file it actually opened: status reporting the claim, rather
+# than re-deriving a path, stays truthful if the save root moves under a live watcher.
 _REPORTED = (
     "pid",
+    "live_state_path",
     "started_at",
     "stopped_at",
     "snapshots",

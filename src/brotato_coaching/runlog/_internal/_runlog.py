@@ -15,7 +15,12 @@ from typing import Any
 
 from . import _watcher
 from ._clock import now
-from ._state import LiveState, UnreadableState, read_live_state
+from ._state import (
+    LIVE_RUN_STATE_FILENAME,
+    LiveState,
+    UnreadableState,
+    read_live_state,
+)
 from ._store import RunRecord, RunStore, UnknownRun
 
 
@@ -26,31 +31,36 @@ class RunLog:
     prints — that document, not any object here, is the contract.
     """
 
-    def __init__(
-        self,
-        *,
-        live_state_path: Path,
-        runs_directory: Path,
-        poll_interval: float = 2.0,
-    ) -> None:
-        self._live_state_path = live_state_path
+    def __init__(self, *, runs_directory: Path, poll_interval: float = 2.0) -> None:
+        """`runs_directory` is where snapshots go, and is all this needs to exist.
+
+        Where the game keeps this player's files is *not* held here: only
+        `capture_once` and `watch` read them, and they are handed the save
+        directory when they are called. Everything else — starting, stopping and
+        inspecting the watcher, listing runs, reading snapshots — answers from
+        `runs/` alone, so none of it can be gated on finding a Brotato install.
+        """
         self._runs_directory = runs_directory
         self._poll_interval = poll_interval
         self._store = RunStore(runs_directory)
         self._watcher_state = _watcher.WatcherState(runs_directory)
 
-    def capture_once(self) -> dict[str, Any]:
-        """Decide, once and synchronously, whether to snapshot the live state."""
+    def capture_once(self, save_directory: Path) -> dict[str, Any]:
+        """Decide, once and synchronously, whether to snapshot the live state.
+
+        Handed the directory, not the file: where the player's files are is
+        `savefile`'s answer, and `run_v3_0.json` is this package's filename to
+        know — the same rule that keeps `save_v3_0.json` over there.
+        """
+        live_state_path = save_directory / LIVE_RUN_STATE_FILENAME
         if (owner := self._other_watcher()) is not None:
             # Two processes writing one run's metadata would corrupt it, and the
             # watcher is already doing this work anyway.
             return self._nothing("watcher-already-running", pid=owner)
         try:
-            state = read_live_state(self._live_state_path)
+            state = read_live_state(live_state_path)
         except FileNotFoundError:
-            return self._nothing(
-                "no-live-state-file", path=str(self._live_state_path)
-            )
+            return self._nothing("no-live-state-file", path=str(live_state_path))
         except UnreadableState:
             # The game writes the file in place; a poll can land mid-write.
             return self._nothing("unreadable-live-state")
@@ -73,23 +83,24 @@ class RunLog:
             "snapshot": str(snapshot),
         }
 
-    def watch(self) -> Iterator[dict[str, Any]]:
+    def watch(self, save_directory: Path) -> Iterator[dict[str, Any]]:
         """Capture on every change until stopped, yielding each decision.
 
-        Claims the watcher session for this process, so that `--status` can see
-        it and `--stop` can end it, whether it was started in the foreground or
-        detached by `--start`.
+        Claims the watcher session for this process, recording the file it is
+        actually watching, so that `--status` can report it and `--stop` can end
+        it, whether it was started in the foreground or detached by `--start`.
         """
+        live_state_path = save_directory / LIVE_RUN_STATE_FILENAME
         signal.signal(signal.SIGTERM, _stop_watching)
         session = self._watcher_state.claim(
-            live_state_path=str(self._live_state_path),
+            live_state_path=str(live_state_path),
             runs_directory=str(self._runs_directory),
             poll_interval=self._poll_interval,
         )
-        yield {"watching": str(self._live_state_path), "pid": session["pid"]}
+        yield {"watching": str(live_state_path), "pid": session["pid"]}
         try:
             while True:
-                decision = self.capture_once()
+                decision = self.capture_once(save_directory)
                 if decision["captured"] or decision["reason"] == "no-run-in-progress":
                     yield decision
                 time.sleep(self._poll_interval)
@@ -115,9 +126,15 @@ class RunLog:
         return _watcher.stop(self._watcher_state)
 
     def watcher_status(self) -> dict[str, Any]:
+        """What the watcher is doing, answered from `runs/` and nothing else.
+
+        The watched file comes back out of the session the running watcher
+        claimed, not from recomputing discovery here: status then reports what is
+        *actually* being watched, which stays true even if the save root has
+        since moved. With no session running there is no such file, and no key.
+        """
         return {
             **_watcher.status(self._watcher_state),
-            "live_state_path": str(self._live_state_path),
             "runs_dir": str(self._runs_directory),
         }
 
@@ -149,8 +166,15 @@ class RunLog:
         return {"captured": False, "reason": reason, "run_id": None, **details}
 
     def _environment(self) -> dict[str, str]:
+        """What a relaunched watcher needs that it cannot work out for itself.
+
+        Not the live state path: the child inherits this process's environment
+        and working directory, so it reaches the same directory by running the
+        same discovery rather than by being told the answer. These two are
+        app-tier settings with no other channel, and knowing their names here is
+        the one place this package reaches upwards.
+        """
         return {
-            "BROTATO_RUN_STATE_PATH": str(self._live_state_path),
             "BROTATO_RUNS_DIR": str(self._runs_directory),
             "BROTATO_POLL_INTERVAL": str(self._poll_interval),
         }
