@@ -17,7 +17,9 @@ One sitting at the game, in which one or more runs are played.
 _Avoid_: run, sitting
 
 **Wave**:
-One timed combat round within a run, followed by a shop.
+One timed combat round within a run, followed by a shop. The live run state
+stores `current_wave`, which is the count of waves **cleared** — the storage
+form, one behind the wave being played, the same split as **Danger**.
 _Avoid_: round, level, stage
 
 **Danger**:

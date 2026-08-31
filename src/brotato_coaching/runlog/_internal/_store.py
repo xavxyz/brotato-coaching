@@ -24,6 +24,9 @@ WATCHER_DIRECTORY = ".watcher"
 
 _METADATA = "run.json"
 _SNAPSHOTS = "snapshots"
+_WAVES_CLEARED = "waves_cleared"
+# What metadata written before wave numbers were fixed called the same count.
+_LEGACY_WAVE = "wave"
 
 
 class UnknownRun(Exception):
@@ -51,10 +54,17 @@ class RunRecord:
 
     @property
     def waves(self) -> list[int]:
+        """Every wave this run was seen in, numbered as the player numbers them.
+
+        Seen, not played: the lowest number here is where capture began, not
+        where the run did. Every run captured so far has its first reading in
+        the shop after wave 1, so wave 1 goes unrecorded even when the watcher
+        was running before the run started.
+        """
         seen = [
-            snapshot["wave"]
+            wave
             for snapshot in self.metadata["snapshots"]
-            if snapshot["wave"] is not None
+            if (wave := _wave_in_progress(snapshot)) is not None
         ]
         return sorted(set(seen))
 
@@ -73,7 +83,8 @@ class RunRecord:
         if identity != state.identity:
             return False
         waves = self.waves
-        return not (waves and state.wave is not None and state.wave < waves[-1])
+        wave = state.wave_in_progress
+        return not (waves and wave is not None and wave < waves[-1])
 
     def summary(self) -> dict[str, Any]:
         return {
@@ -88,6 +99,39 @@ class RunRecord:
             "waves": self.waves,
             "snapshots": len(self.metadata["snapshots"]),
         }
+
+
+def _waves_cleared(snapshot: dict[str, Any]) -> int | None:
+    """How many waves a snapshot entry records as cleared.
+
+    Metadata written before wave numbers were fixed stored the same count under
+    `wave`, so runs captured then read back as the runs they were.
+    """
+    value = snapshot.get(_WAVES_CLEARED, snapshot.get(_LEGACY_WAVE))
+    # `True` is an `int` here; metadata is a file on disk, not a promise.
+    return value if isinstance(value, int) and not isinstance(value, bool) else None
+
+
+def _wave_in_progress(snapshot: dict[str, Any]) -> int | None:
+    """The wave a snapshot entry was taken in: one past the count it cleared."""
+    cleared = _waves_cleared(snapshot)
+    return None if cleared is None else cleared + 1
+
+
+def _reported(snapshot: dict[str, Any]) -> dict[str, Any]:
+    """One snapshot entry as a reader gets it, with the stored count dropped.
+
+    A document carrying both `waves_cleared: 7` and `wave: 8` invites exactly
+    the confusion the count was renamed to end, so only the wave goes out.
+    """
+    return {
+        **{
+            key: value
+            for key, value in snapshot.items()
+            if key not in (_WAVES_CLEARED, _LEGACY_WAVE)
+        },
+        "wave": _wave_in_progress(snapshot),
+    }
 
 
 class RunStore:
@@ -123,7 +167,7 @@ class RunStore:
             {
                 "file": name,
                 "captured_at": stamp(at),
-                "wave": state.wave,
+                _WAVES_CLEARED: state.waves_cleared,
                 "digest": state.digest,
             }
         )
@@ -151,7 +195,7 @@ class RunStore:
                     **run.summary(),
                     "snapshots": [
                         {
-                            **snapshot,
+                            **_reported(snapshot),
                             "state": json.loads(
                                 (run.directory / _SNAPSHOTS / snapshot["file"])
                                 .read_text()

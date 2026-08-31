@@ -198,6 +198,11 @@ def run_state(
     Only the fields the watcher and a review reason about are spelled out; the
     real file carries far more, and the watcher copies it whole either way.
 
+    `wave` is the wave being played, the way a player numbers them. The game
+    stores the count of waves *cleared*, one less, so that is what goes into
+    `current_wave` — a fixture that stored the friendly number would hide the
+    conversion worth testing.
+
     `stats` is written the way the game writes it — an `effects` map keyed by
     the Godot hash of the stat name — so a test that hands over `stat_armor` is
     asserting against the real encoding rather than a convenient one.
@@ -205,7 +210,7 @@ def run_state(
     return {
         "current_run_state": {
             "has_run_state": True,
-            "current_wave": wave,
+            "current_wave": wave - 1,
             "current_difficulty": danger,
             "current_zone": zone,
             "nb_of_waves": 20,

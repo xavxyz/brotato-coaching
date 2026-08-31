@@ -49,8 +49,25 @@ class LiveState:
         return _as_str(self._player.get("current_character"))
 
     @property
-    def wave(self) -> int | None:
+    def waves_cleared(self) -> int | None:
+        """The game's `current_wave`: how many waves this run has finished.
+
+        The storage form, not the name — the counter ticks over during the
+        wave-cleared animation, so it is one behind the wave a player would say
+        they are on. `wave_in_progress` is the number a reader means.
+        """
         return _as_int(self._run.get("current_wave"))
+
+    @property
+    def wave_in_progress(self) -> int | None:
+        """The wave being played: one past the count cleared.
+
+        A reading stamped N is either the shop after wave N was cleared or wave
+        N+1 already in progress; both describe wave N+1, so one number answers
+        for both without a reader having to know which it was.
+        """
+        cleared = self.waves_cleared
+        return None if cleared is None else cleared + 1
 
     @property
     def danger(self) -> int | None:

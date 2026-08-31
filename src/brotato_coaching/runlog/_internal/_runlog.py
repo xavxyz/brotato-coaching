@@ -79,7 +79,7 @@ class RunLog:
             "reason": None,
             "run_id": run.run_id,
             "character": state.character,
-            "wave": state.wave,
+            "wave": state.wave_in_progress,
             "snapshot": str(snapshot),
         }
 
