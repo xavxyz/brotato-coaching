@@ -25,6 +25,13 @@ def runs_directory() -> Path:
     return _REPO_ROOT / "runs"
 
 
+def drills_directory() -> Path:
+    """Where prep drills are kept. Committed, like `runs/`: the player's own data."""
+    if override := os.environ.get("BROTATO_DRILLS_DIR"):
+        return Path(override).expanduser()
+    return _REPO_ROOT / "drills"
+
+
 def poll_interval() -> float:
     """How often the watcher re-reads the live run state, in seconds."""
     try:

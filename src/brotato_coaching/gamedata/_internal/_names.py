@@ -14,12 +14,11 @@ empty book — never an error — when the player has not extracted yet.
 
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from ._catalog import CATALOGUE_NAMES
+from ._catalog import CATALOGUE_NAMES, read_catalogue
 
 _HASH_SEED = 5381
 _32_BITS = 0xFFFFFFFF
@@ -69,15 +68,7 @@ def read_names(directory: Path) -> NameBook:
 
 
 def _identifiers(path: Path, catalogue: str) -> list[str]:
-    try:
-        document = json.loads(path.read_text())
-    except (OSError, ValueError):
-        return []
-    entities = document.get(catalogue) if isinstance(document, dict) else None
-    if not isinstance(entities, list):
-        return []
+    entities, _ = read_catalogue(path, catalogue)
     return [
-        entity["id"]
-        for entity in entities
-        if isinstance(entity, dict) and isinstance(entity.get("id"), str)
+        entity["id"] for entity in entities if isinstance(entity.get("id"), str)
     ]

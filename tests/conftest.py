@@ -51,6 +51,7 @@ _DISCOVERY_VARIABLES = (
     "BROTATO_APPLICATION_SUPPORT",
     "BROTATO_INSTALL_DIR",
     "BROTATO_RUNS_DIR",
+    "BROTATO_DRILLS_DIR",
     "BROTATO_POLL_INTERVAL",
     "BROTATO_DATA_DIR",
 )
@@ -106,11 +107,13 @@ def cli(tmp_path: Path) -> CliRunner:
         data_directory: Path | str | None = None,
         cwd: Path | None = None,
         runs_dir: Path | None = None,
+        drills_dir: Path | None = None,
     ) -> CliResult:
         environment = _isolated_environment()
-        # Always set, never defaulted: a subcommand that captures must not be
-        # able to reach the repo's committed `runs/` from a test.
+        # Always set, never defaulted: a subcommand that writes must not be able
+        # to reach the repo's committed `runs/` or `drills/` from a test.
         environment["BROTATO_RUNS_DIR"] = str(runs_dir or tmp_path / "runs")
+        environment["BROTATO_DRILLS_DIR"] = str(drills_dir or tmp_path / "drills")
         if data_directory is not None:
             environment["BROTATO_DATA_DIR"] = str(data_directory)
         if application_support is not None:

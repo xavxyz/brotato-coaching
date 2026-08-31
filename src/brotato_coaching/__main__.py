@@ -22,9 +22,12 @@ from brotato_coaching.gamedata import (
     InstallNotFound,
     extract,
     find_install,
+    read_catalog,
     read_names,
 )
+from brotato_coaching.prep import PrepDrills, PrepRefused
 from brotato_coaching.savefile import (
+    Progress,
     SaveDirectoryUnavailable,
     SaveUnavailable,
     read_progress,
@@ -38,9 +41,17 @@ from .runlog import AlreadyWatching, RunLog, UnknownRun
 
 @dataclass(frozen=True)
 class _Argument:
+    """One flag or positional, and whether it rules the other modes out.
+
+    `exclusive` is per-argument rather than per-subcommand because `prep` mixes
+    the two: `--reveal` and `--history` are modes and cannot be combined, while
+    `--primary-stat` is a value one of those modes takes.
+    """
+
     name: str
     help: str
     options: Mapping[str, Any] = field(default_factory=dict)
+    exclusive: bool = False
 
 
 @dataclass(frozen=True)
@@ -48,7 +59,6 @@ class _Subcommand:
     help: str
     handler: Callable[[argparse.Namespace], int] | None = None
     arguments: tuple[_Argument, ...] = field(default_factory=tuple)
-    exclusive: bool = False
 
 
 def _run_log() -> RunLog:
@@ -185,6 +195,96 @@ def _runs(arguments: argparse.Namespace) -> int:
         return 1
 
 
+def _prep(arguments: argparse.Namespace) -> int:
+    """The drill's five modes, all of them one `PrepDrills` away.
+
+    The join this handler performs is the same one `progress` performs, for the
+    same reason: the save names the characters the player has cleared, the
+    extracted data describes them, and neither package knows about the other.
+    """
+    drills = PrepDrills(_settings.drills_directory())
+    try:
+        if arguments.history:
+            return _emit(drills.history())
+        if arguments.commit:
+            return _emit(drills.commit(arguments.commit, **_predictions(arguments)))
+        if arguments.reveal:
+            return _emit(drills.reveal(arguments.reveal))
+        if arguments.settle:
+            if arguments.actual_wave is None:
+                raise PrepRefused(
+                    "--settle needs --actual-wave: the wave the run actually broke at"
+                )
+            return _emit(
+                drills.settle(arguments.settle, actual_wave=arguments.actual_wave)
+            )
+        catalog = read_catalog(_settings.data_directory())
+        # The save is read only when it has something to decide. Naming a
+        # character is always allowed to work, including where there is no save.
+        history = {} if arguments.character else _player()
+        return _emit(
+            drills.open_drill(
+                catalog, character_id=arguments.character, **history
+            )
+        )
+    except PrepRefused as refused:
+        print(f"brotato-coaching: {refused}", file=sys.stderr)
+        return 1
+
+
+def _predictions(arguments: argparse.Namespace) -> dict[str, Any]:
+    """The four answers, or a refusal naming the ones that are missing.
+
+    All four or none: a drill that let three through would be a drill the player
+    could hedge on by leaving the one they are least sure of until after the
+    reveal, which is the exact habit it exists to break.
+    """
+    committed = {
+        "primary_stat": arguments.primary_stat,
+        "secondary_stat": arguments.secondary_stat,
+        "weapon_class": arguments.weapon_class,
+        "weakest_wave": arguments.weakest_wave,
+    }
+    missing = [name for name, value in committed.items() if value is None]
+    if missing:
+        flags = ", ".join(f"--{name.replace('_', '-')}" for name in missing)
+        raise PrepRefused(
+            f"all four predictions are committed together; still missing: {flags}"
+        )
+    return committed
+
+
+def _player() -> dict[str, Any]:
+    """What the save says about who the player has already reasoned about.
+
+    A save that cannot be read is not a reason to refuse a drill: without one
+    every character is a candidate, which is the right answer on a machine that
+    has the game but not this player's progress on it.
+    """
+    try:
+        progress = read_progress(save_file())
+    except (SaveUnavailable, SaveDirectoryUnavailable):
+        return {}
+    names = read_names(_settings.data_directory())
+    return {
+        "unlocked": {
+            name
+            for name in (
+                names.name_for(identifier)
+                for identifier in progress.unlocked_characters
+            )
+            if name
+        },
+        "cleared": _cleared(progress),
+    }
+
+
+def _cleared(progress: Progress) -> set[str]:
+    return {
+        character.character_id for character in progress.characters if character.cleared
+    }
+
+
 _SUBCOMMANDS: dict[str, _Subcommand] = {
     "extract": _Subcommand(
         help="extract character modifiers, weapon stats and item effects from the installed game",
@@ -220,27 +320,93 @@ _SUBCOMMANDS: dict[str, _Subcommand] = {
     "watch": _Subcommand(
         help="capture snapshots of live run state while a run is in progress",
         handler=_watch,
-        exclusive=True,
         arguments=(
             _Argument(
                 name="--once",
                 help="make a single capture decision and exit, rather than watching",
                 options={"action": "store_true"},
+                exclusive=True,
             ),
             _Argument(
                 name="--start",
                 help="start the watcher in the background and return",
                 options={"action": "store_true"},
+                exclusive=True,
             ),
             _Argument(
                 name="--stop",
                 help="stop the background watcher and report the session it captured",
                 options={"action": "store_true"},
+                exclusive=True,
             ),
             _Argument(
                 name="--status",
                 help="report whether the watcher is running and what it has captured",
                 options={"action": "store_true"},
+                exclusive=True,
+            ),
+        ),
+    ),
+    "prep": _Subcommand(
+        help="run the derivation drill: predict a character's plan before being told who it is",
+        handler=_prep,
+        arguments=(
+            _Argument(
+                name="character",
+                help="a character id such as `character_mage`; omit to be proposed one",
+                options={"nargs": "?", "default": None},
+            ),
+            _Argument(
+                name="--commit",
+                help="record all four predictions for a drill id, before any reveal",
+                options={"metavar": "DRILL_ID", "default": None},
+                exclusive=True,
+            ),
+            _Argument(
+                name="--reveal",
+                help="name the character and score each committed prediction",
+                options={"metavar": "DRILL_ID", "default": None},
+                exclusive=True,
+            ),
+            _Argument(
+                name="--settle",
+                help="score the wave prediction against the wave a run actually broke at",
+                options={"metavar": "DRILL_ID", "default": None},
+                exclusive=True,
+            ),
+            _Argument(
+                name="--history",
+                help="report the prediction hit rate per dimension across every drill",
+                options={"action": "store_true"},
+                exclusive=True,
+            ),
+            # The four predictions, spelled out rather than generated: they are
+            # the drill's whole contract, and `PrepDrills.commit` names the same
+            # four in its signature, so a fifth cannot be added in one place only.
+            _Argument(
+                name="--primary-stat",
+                help="with --commit: the stat predicted to matter most",
+                options={"metavar": "STAT", "default": None},
+            ),
+            _Argument(
+                name="--secondary-stat",
+                help="with --commit: the stat predicted to matter next",
+                options={"metavar": "STAT", "default": None},
+            ),
+            _Argument(
+                name="--weapon-class",
+                help="with --commit: the weapon class predicted to be right",
+                options={"metavar": "CLASS", "default": None},
+            ),
+            _Argument(
+                name="--weakest-wave",
+                help="with --commit: the wave the build is predicted to be weakest at",
+                options={"metavar": "WAVE", "type": int, "default": None},
+            ),
+            _Argument(
+                name="--actual-wave",
+                help="with --settle: the wave the run actually broke at",
+                options={"metavar": "WAVE", "type": int, "default": None},
             ),
         ),
     ),
@@ -258,12 +424,11 @@ def _build_parser() -> argparse.ArgumentParser:
             name, help=subcommand.help, description=subcommand.help
         )
         subparser.set_defaults(subcommand=name, handler=subcommand.handler)
-        target = (
-            subparser.add_mutually_exclusive_group()
-            if subcommand.exclusive
-            else subparser
-        )
+        modes = None
         for argument in subcommand.arguments:
+            if argument.exclusive and modes is None:
+                modes = subparser.add_mutually_exclusive_group()
+            target = modes if argument.exclusive else subparser
             target.add_argument(argument.name, help=argument.help, **argument.options)
     return parser
 

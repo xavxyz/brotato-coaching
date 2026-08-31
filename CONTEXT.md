@@ -100,10 +100,21 @@ The written outcome of reviewing one run: what happened, the player's hypothesis
 diagnosis, and the single change to try next.
 _Avoid_: report, post-mortem, review
 
+**Drill**:
+One pass through `/brotato-prep`: a character's modifiers shown with its name withheld,
+four predictions committed, then the reveal and the scoring. The unit the prediction hit
+rate is counted in.
+_Avoid_: exercise, quiz, practice
+
 **Prediction**:
 A committed answer given before a reveal in a prep drill. Scored individually, and tracked
 over time as the measure of whether the coaching works.
 _Avoid_: guess, answer
+
+**Reveal**:
+The moment a drill names the character and scores what was predicted. Everything before it
+is withheld; nothing after it can change what was committed.
+_Avoid_: answer, solution
 
 **Spec**:
 The document describing what is being built and why. One per body of work.

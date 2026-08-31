@@ -38,7 +38,7 @@ uv run brotato --help
 
 `brotato` and `brotato-coaching` are the same command.
 
-## The four subcommands
+## The five subcommands
 
 ```sh
 uv run brotato progress                 # your save: progress per character, deaths, purchases, totals
@@ -46,6 +46,7 @@ uv run brotato extract                  # game data -> data/ (gitignored: it is 
 uv run brotato watch                    # capture snapshots until you stop it (Ctrl-C)
 uv run brotato runs                     # list every captured run
 uv run brotato runs <run-id>            # one run's snapshots, read back whole
+uv run brotato prep                     # the derivation drill, on a character chosen from your save
 ```
 
 `watch` also runs detached, which is how you use it around an actual session:
@@ -57,13 +58,22 @@ uv run brotato watch --stop             # stop it, and report the session it jus
 uv run brotato watch --once             # make a single capture decision and exit
 ```
 
+`prep` is the drill `/brotato-prep` runs. It shows a character's modifiers and starting
+weapon with every trace of its name removed, takes four committed predictions, and only
+then names it and scores each one:
+
+```sh
+uv run brotato prep character_mage      # or drill a character you name
+uv run brotato prep --commit <drill-id> --primary-stat ... --secondary-stat ... \
+                    --weapon-class ... --weakest-wave ...
+uv run brotato prep --reveal <drill-id> # refused until all four are committed
+uv run brotato prep --settle <drill-id> --actual-wave 13
+uv run brotato prep --history           # prediction hit rate, per dimension, over time
+```
+
 A subcommand exits non-zero only when it could not do what it was asked. "No run in
 progress", "nothing captured", "no watcher running" are JSON on stdout and an exit code of
 zero — reporting them *is* the job.
-
-**Ids come out raw.** `deaths` and `items_bought` are keyed by the integer hashes the game
-uses internally. Resolving them to names is the join between the save and the extracted game
-data, and it is not built yet.
 
 ## Configuration
 
@@ -89,6 +99,7 @@ error messages deliberately do not echo it back.
 | `docs/adr/` | Decisions, with the context that produced them. |
 | `docs/research/` | Research passes: stat mechanics, shop economy, wave scaling, weapon classes. |
 | `runs/` | Captured runs. Committed — they are the player's own data. |
+| `drills/` | Prep drills and their verdicts. Committed, for the same reason. |
 | `lessons/`, `assets/` | Teaching artefacts and their styling. |
 | `reference/` | Reference docs: one printable page per concept. Every number in one is re-derived from the installed game by the test suite. |
 | `src/brotato_coaching/` | The tooling. Its README documents the package rules. |
