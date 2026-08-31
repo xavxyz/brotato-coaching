@@ -17,3 +17,6 @@ kept whole.
 
 These are the player's own data and are committed. `.watcher/`, which holds the
 watcher's pid and session counters, is not.
+
+What a review *concludes* about a run is not kept here: it goes to `records/`,
+one file per reviewed run, so that nothing outside `runlog` writes under `runs/`.

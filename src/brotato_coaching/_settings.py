@@ -25,6 +25,18 @@ def runs_directory() -> Path:
     return _REPO_ROOT / "runs"
 
 
+def records_directory() -> Path:
+    """Where run records are kept. Committed, so it lives in the repo too.
+
+    A sibling of `runs/`, not a child of it: `runlog` owns everything under
+    `runs/` and rewrites a run's metadata as it captures, and a record written
+    by a review is the player's writing, not the watcher's output.
+    """
+    if override := os.environ.get("BROTATO_RECORDS_DIR"):
+        return Path(override).expanduser()
+    return _REPO_ROOT / "records"
+
+
 def poll_interval() -> float:
     """How often the watcher re-reads the live run state, in seconds."""
     try:

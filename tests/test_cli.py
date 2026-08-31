@@ -5,7 +5,7 @@ from pathlib import Path
 from conftest import CliRunner
 from test_gamedata import ABYSSAL_TERRORS_RESOURCES, BASE_RESOURCES, write_container
 
-PLANNED_SUBCOMMANDS = ("extract", "progress", "runs", "watch")
+PLANNED_SUBCOMMANDS = ("extract", "progress", "records", "review", "runs", "watch")
 
 
 def test_help_succeeds(cli: CliRunner) -> None:
