@@ -22,13 +22,18 @@ from brotato_coaching.gamedata import (
     InstallNotFound,
     extract,
     find_install,
+    read_names,
 )
-from brotato_coaching.savefile import SaveUnavailable, read_progress
+from brotato_coaching.savefile import (
+    SaveDirectoryUnavailable,
+    SaveUnavailable,
+    read_progress,
+    save_directory,
+    save_file,
+)
 
-from . import _paths
+from . import _settings
 from .runlog import AlreadyWatching, RunLog, UnknownRun
-
-DEFAULT_DATA_DIRECTORY = Path("data")
 
 
 @dataclass(frozen=True)
@@ -47,10 +52,14 @@ class _Subcommand:
 
 
 def _run_log() -> RunLog:
+    """The one way to build a `RunLog`: `runs/` and how often to look at it.
+
+    Nothing here asks where the game keeps its files. That question is asked
+    later, and only by the commands whose job needs the answer.
+    """
     return RunLog(
-        live_state_path=_paths.live_run_state_path(),
-        runs_directory=_paths.runs_directory(),
-        poll_interval=_paths.poll_interval(),
+        runs_directory=_settings.runs_directory(),
+        poll_interval=_settings.poll_interval(),
     )
 
 
@@ -88,35 +97,67 @@ def _extract(arguments: argparse.Namespace) -> int:
 
 
 def _progress(_arguments: argparse.Namespace) -> int:
-    """Report the save as JSON.
+    """Report the save as JSON, with ids named where the game data can name them.
 
-    The ids in `deaths` and `purchases` come out raw. Resolving them to names
-    is the join between `savefile` and `gamedata`, and it belongs here — but
-    the join is not built yet, so for now raw is all there is.
+    This is the join: `savefile` supplies the ids, `gamedata` owns the hash that
+    turns them back into names, and neither knows about the other. When nothing
+    has been extracted the book is empty and the ids stay raw — a report of
+    integers still answers most of the questions asked of it.
     """
     try:
-        report = read_progress()
+        report = read_progress(save_file())
     except SaveUnavailable as unavailable:
         print(f"brotato-coaching: {unavailable}", file=sys.stderr)
         return 1
-    print(json.dumps(report.as_json_object(), indent=2))
+    names = read_names(_settings.data_directory())
+    if not names:
+        print(
+            "brotato-coaching: no extracted game data, so ids are reported raw; "
+            "`brotato-coaching extract` gives them names",
+            file=sys.stderr,
+        )
+    print(json.dumps(report.as_json_object(names.name_for), indent=2))
     return 0
 
 
 def _watch(arguments: argparse.Namespace) -> int:
-    """No flag means watch until stopped; each flag names one `RunLog` method."""
+    """No flag means watch until stopped; each flag names one `RunLog` method.
+
+    Where the player's files are is resolved lazily, and only for the commands
+    that read them. `--stop` and `--status` speak about a watcher and `runs/`,
+    never about the game, so an unmounted or moved save root must not be able to
+    strand a running watcher beyond inspecting or stopping it.
+
+    Not finding the directory is reported, not raised: the watcher has nothing to
+    say yet, which is a state and not a failure to do the job asked.
+    """
     run_log = _run_log()
-    one_shot = {
-        "once": run_log.capture_once,
-        "start": run_log.start_watcher,
-        "stop": run_log.stop_watcher,
-        "status": run_log.watcher_status,
-    }
-    for flag, action in one_shot.items():
-        if getattr(arguments, flag):
-            return _emit(action())
+    if arguments.stop:
+        return _emit(run_log.stop_watcher())
+    if arguments.status:
+        return _emit(run_log.watcher_status())
     try:
-        for event in run_log.watch():
+        # `--start` does not strictly need the path — the detached child runs
+        # discovery for itself — but resolving it here is a deliberate pre-flight,
+        # so a misconfigured save root reads as the real message rather than as a
+        # child that never claimed the session and a handshake timeout.
+        directory = save_directory()
+    except SaveDirectoryUnavailable as unavailable:
+        # `reason` stays a token, as everywhere else in this document; the
+        # sentence written for the player travels beside it.
+        return _emit(
+            {
+                "watching": False,
+                "reason": "no-save-directory",
+                "detail": str(unavailable),
+            }
+        )
+    if arguments.once:
+        return _emit(run_log.capture_once(directory))
+    if arguments.start:
+        return _emit(run_log.start_watcher())
+    try:
+        for event in run_log.watch(directory):
             _emit(event, streaming=True)
     except AlreadyWatching as already_watching:
         return _emit(
@@ -154,7 +195,9 @@ _SUBCOMMANDS: dict[str, _Subcommand] = {
                 help="directory to write the JSON into",
                 options={
                     "metavar": "DIRECTORY",
-                    "default": str(DEFAULT_DATA_DIRECTORY),
+                    # The same directory `progress` resolves names from, so
+                    # extracting and reading cannot drift apart.
+                    "default": str(_settings.data_directory()),
                 },
             ),
         ),

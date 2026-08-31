@@ -13,7 +13,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from ._catalog import Catalog, build_catalog
+from ._catalog import build_catalog
 from ._container import open_container
 from ._install import GameInstall
 
@@ -52,7 +52,7 @@ def extract(install: GameInstall, destination: Path) -> Extraction:
 
     files: list[Path] = []
     counts: dict[str, int] = {}
-    for name, entities in _catalogues(catalog):
+    for name, entities in catalog.by_name():
         files.append(_write(destination / f"{name}.json", install.version, name, entities))
         counts[name] = len(entities)
 
@@ -62,14 +62,6 @@ def extract(install: GameInstall, destination: Path) -> Extraction:
         files=tuple(files),
         counts=counts,
         sources=tuple(containers),
-    )
-
-
-def _catalogues(catalog: Catalog) -> tuple[tuple[str, list], ...]:
-    return (
-        ("characters", catalog.characters),
-        ("weapons", catalog.weapons),
-        ("items", catalog.items),
     )
 
 

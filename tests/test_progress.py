@@ -10,7 +10,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from conftest import PLACEHOLDER_STEAM_ID, CliRunner, steam_ids_in
+from conftest import (
+    PLACEHOLDER_STEAM_ID,
+    CliRunner,
+    steam_ids_in,
+    write_game_data,
+)
 
 # Values read off the committed real save. They are assertions about the
 # fixture, so they are allowed to be exact.
@@ -23,6 +28,7 @@ CLEARED_CHARACTERS = {
     "character_one_arm",
     "character_diver",
 }
+UNLOCKED_CHARACTER_COUNT = 48
 DEATH_CAUSE_COUNT = 15
 DEATH_TOTAL = 24
 PURCHASED_ITEM_COUNT = 260
@@ -129,7 +135,9 @@ def test_the_death_histogram_is_reported_as_raw_enemy_ids(
     deaths = cli("progress", application_support=real_save_root).json()["deaths"]
     assert len(deaths) == DEATH_CAUSE_COUNT
     assert sum(deaths.values()) == DEATH_TOTAL
-    assert all(key.isdigit() for key in deaths), "ids stay raw; names arrive later"
+    assert all(
+        key.isdigit() for key in deaths
+    ), "with no extracted data, ids stay raw rather than failing"
 
 
 def test_the_death_histogram_leads_with_what_kills_most(
@@ -145,6 +153,118 @@ def test_purchase_counts_are_reported_as_raw_item_ids(
     purchases = cli("progress", application_support=real_save_root).json()["purchases"]
     assert len(purchases) == PURCHASED_ITEM_COUNT
     assert all(key.isdigit() for key in purchases)
+
+
+# --- resolving ids to names ------------------------------------------------
+#
+# The ids below are the real save's, and the names are what the game's hash
+# says they are. They are the end-to-end assertion that the algorithm in
+# `gamedata` is the one the game used when it wrote this file.
+
+
+def test_deaths_are_named_once_the_game_data_has_been_extracted(
+    cli: CliRunner, real_save_root: Path, tmp_path: Path
+) -> None:
+    data = write_game_data(tmp_path / "data", enemies=["lamprey", "giant", "crab"])
+
+    deaths = cli(
+        "progress", application_support=real_save_root, data_directory=data
+    ).json()["deaths"]
+
+    assert deaths["lamprey"] == 5
+    assert deaths["giant"] == 2
+    assert deaths["crab"] == 2
+    assert sum(deaths.values()) == DEATH_TOTAL
+
+
+def test_the_death_histogram_still_leads_with_what_kills_most_when_named(
+    cli: CliRunner, real_save_root: Path, tmp_path: Path
+) -> None:
+    data = write_game_data(tmp_path / "data", enemies=["lamprey"])
+
+    deaths = cli(
+        "progress", application_support=real_save_root, data_directory=data
+    ).json()["deaths"]
+
+    assert next(iter(deaths)) == "lamprey"
+
+
+def test_an_id_the_extracted_data_does_not_know_stays_raw(
+    cli: CliRunner, real_save_root: Path, tmp_path: Path
+) -> None:
+    data = write_game_data(tmp_path / "data", enemies=["lamprey"])
+
+    deaths = cli(
+        "progress", application_support=real_save_root, data_directory=data
+    ).json()["deaths"]
+
+    assert "lamprey" in deaths
+    assert len(deaths) == DEATH_CAUSE_COUNT
+    assert sum(key.isdigit() for key in deaths) == DEATH_CAUSE_COUNT - 1
+
+
+def test_purchases_are_named_across_every_catalogue(
+    cli: CliRunner, real_save_root: Path, tmp_path: Path
+) -> None:
+    """The shop sells items, weapons and characters, so a name may be any of them."""
+    data = write_game_data(
+        tmp_path / "data",
+        characters=["character_glutton"],
+        items=["item_alien_baby"],
+        weapons=["weapon_harpoon_gun_2"],
+    )
+
+    purchases = cli(
+        "progress", application_support=real_save_root, data_directory=data
+    ).json()["purchases"]
+
+    assert purchases["character_glutton"] == 45
+    assert purchases["item_alien_baby"] == 1
+    assert "weapon_harpoon_gun_2" in purchases
+    assert len(purchases) == PURCHASED_ITEM_COUNT
+
+
+def test_unlocked_characters_are_named(
+    cli: CliRunner, real_save_root: Path, tmp_path: Path
+) -> None:
+    """The save's one record of who the player may play, in names."""
+    data = write_game_data(
+        tmp_path / "data", characters=["character_mage", "character_crazy"]
+    )
+
+    report = cli(
+        "progress", application_support=real_save_root, data_directory=data
+    ).json()
+
+    unlocked = report["unlocked_characters"]
+    assert "character_mage" in unlocked
+    assert "character_crazy" in unlocked
+    assert len(unlocked) == UNLOCKED_CHARACTER_COUNT
+    assert unlocked == sorted(unlocked), "stable order, so two reports can be diffed"
+
+
+def test_unlocked_characters_stay_raw_without_extracted_data(
+    cli: CliRunner, real_save_root: Path
+) -> None:
+    unlocked = cli("progress", application_support=real_save_root).json()[
+        "unlocked_characters"
+    ]
+
+    assert len(unlocked) == UNLOCKED_CHARACTER_COUNT
+    assert all(identifier.isdigit() for identifier in unlocked)
+
+
+def test_a_data_directory_that_was_never_extracted_is_not_an_error(
+    cli: CliRunner, real_save_root: Path, tmp_path: Path
+) -> None:
+    result = cli(
+        "progress",
+        application_support=real_save_root,
+        data_directory=tmp_path / "never-extracted",
+    )
+
+    assert result.exit_code == 0
+    assert all(key.isdigit() for key in result.json()["deaths"])
 
 
 def test_no_steam_id_reaches_the_output(cli: CliRunner, real_save_root: Path) -> None:
@@ -192,8 +312,9 @@ def test_the_offline_save_does_not_shadow_the_steam_save(
 ) -> None:
     """Brotato writes an empty `user/` save beside the Steam one.
 
-    Every real install has both, so globbing that stopped at "two saves, which
-    one?" would never once find the save it was written to find.
+    Every real install has both, so discovery that stopped at "two saves, which
+    one?" would never once find the save it was written to find. `user` is not a
+    Steam ID, so it is not a candidate at all.
     """
     _write_save(real_save_root / "user", _empty_save_document())
     report = cli("progress", application_support=real_save_root).json()
@@ -210,12 +331,21 @@ def test_several_steam_saves_and_no_steam_id_asks_for_one(
     assert "Traceback" not in result.stderr
 
 
-def test_only_an_offline_save_is_still_worth_reading(
+def test_an_offline_save_on_its_own_is_not_found(
     cli: CliRunner, save_root: Path
 ) -> None:
+    """This tool reads Steam saves. A `user/` save is not one, even when alone.
+
+    Supporting it would mean discovery could no longer say what a save directory
+    looks like, and the tool depends on Steam throughout.
+    """
     _write_save(save_root / "user", _empty_save_document())
-    report = cli("progress", application_support=save_root).json()
-    assert report["lifetime"] == {"runs_started": 0, "runs_won": 0}
+
+    result = cli("progress", application_support=save_root)
+
+    assert result.exit_code != 0
+    assert "Traceback" not in result.stderr
+    assert "save directory" in result.stderr
 
 
 # --- when there is nothing to read -----------------------------------------
@@ -276,6 +406,7 @@ def test_a_save_with_nothing_played_yet_reports_zeroes_rather_than_failing(
     assert report == {
         "lifetime": {"runs_started": 0, "runs_won": 0},
         "characters": [],
+        "unlocked_characters": [],
         "deaths": {},
         "purchases": {},
     }

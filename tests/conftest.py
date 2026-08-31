@@ -50,9 +50,9 @@ _DISCOVERY_VARIABLES = (
     "STEAM_ID",
     "BROTATO_APPLICATION_SUPPORT",
     "BROTATO_INSTALL_DIR",
-    "BROTATO_RUN_STATE_PATH",
     "BROTATO_RUNS_DIR",
     "BROTATO_POLL_INTERVAL",
+    "BROTATO_DATA_DIR",
 )
 
 
@@ -103,9 +103,16 @@ def cli(tmp_path: Path) -> CliRunner:
         application_support: Path | str | None = None,
         steam_id: str | None = None,
         install_dir: Path | str | None = None,
+        data_directory: Path | str | None = None,
         cwd: Path | None = None,
+        runs_dir: Path | None = None,
     ) -> CliResult:
         environment = _isolated_environment()
+        # Always set, never defaulted: a subcommand that captures must not be
+        # able to reach the repo's committed `runs/` from a test.
+        environment["BROTATO_RUNS_DIR"] = str(runs_dir or tmp_path / "runs")
+        if data_directory is not None:
+            environment["BROTATO_DATA_DIR"] = str(data_directory)
         if application_support is not None:
             environment["BROTATO_APPLICATION_SUPPORT"] = str(application_support)
         if steam_id is not None:
@@ -138,6 +145,23 @@ def real_save_root(save_root: Path) -> Path:
     destination = save_root / PLACEHOLDER_STEAM_ID
     shutil.copytree(REAL_SAVE_ROOT / PLACEHOLDER_STEAM_ID, destination)
     return save_root
+
+
+def write_game_data(directory: Path, **catalogues: list[str]) -> Path:
+    """An extracted `data/` directory holding only the ids a test cares about.
+
+    Shaped exactly like what `extract` writes — a catalogue name, a version
+    stamp, a list of entities — so a test that fakes it is still asserting
+    against the real contract.
+    """
+    directory.mkdir(parents=True, exist_ok=True)
+    for name, identifiers in catalogues.items():
+        document = {
+            "game_version": "1.2.3-test",
+            name: [{"id": identifier} for identifier in identifiers],
+        }
+        (directory / f"{name}.json").write_text(json.dumps(document), encoding="utf-8")
+    return directory
 
 
 NO_RUN_IN_PROGRESS: dict[str, Any] = {"current_run_state": {"has_run_state": False}}
@@ -177,11 +201,20 @@ def run_state(
 
 
 class Workspace:
-    """A tmp directory standing in for the game's save directory and `runs/`."""
+    """A tmp application-support tree, plus the `runs/` the watcher fills.
+
+    Shaped like the real thing — a Steam-ID-named directory under an
+    application-support root — because the watcher now finds the live run state
+    by discovering that directory, rather than by being handed a path. A fixture
+    that was handed a path would exercise nothing.
+    """
 
     def __init__(self, root: Path) -> None:
         self.root = root
-        self.state_path = root / "run_v3_0.json"
+        self.application_support = root / "application-support" / "Brotato"
+        self.save_directory = self.application_support / PLACEHOLDER_STEAM_ID
+        self.save_directory.mkdir(parents=True)
+        self.state_path = self.save_directory / "run_v3_0.json"
         self.runs_dir = root / "runs"
 
     def write_state(self, payload: dict[str, Any]) -> None:
@@ -197,7 +230,7 @@ class Workspace:
     def environment(self) -> dict[str, str]:
         return {
             **_isolated_environment(),
-            "BROTATO_RUN_STATE_PATH": str(self.state_path),
+            "BROTATO_APPLICATION_SUPPORT": str(self.application_support),
             "BROTATO_RUNS_DIR": str(self.runs_dir),
             "BROTATO_POLL_INTERVAL": "0.05",
         }
@@ -208,6 +241,7 @@ class Workspace:
             capture_output=True,
             text=True,
             env=self.environment(),
+            cwd=self.root,
         )
 
     def json_cli(self, *args: str) -> Any:
