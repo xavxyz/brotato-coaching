@@ -56,9 +56,21 @@ What the game records about itself: character modifiers, weapon stats, item effe
 extracted from the installed game. Belongs to the publisher, and is never committed.
 _Avoid_: game files, assets, static data
 
+**Save directory**:
+The per-player directory the game writes into, named by the player's Steam ID. Holds both
+the save data and the live run state. Where it is, is discovered; a caller is handed it,
+and never spells it out.
+_Avoid_: save folder, profile directory, user directory
+
+**Live run state**:
+The file the game keeps the current run in while it is being played, and erases when the
+run ends. The thing a snapshot is taken of, not the snapshot itself. Shortens to **live
+state** in code, where the run is already implied.
+_Avoid_: run state, current run, live save
+
 **Snapshot**:
-One capture of live run state, taken while a run is in progress. Snapshots are grouped by
-the run they belong to, and outlive the game erasing that state on death.
+One capture of the live run state, taken while a run is in progress. Snapshots are grouped
+by the run they belong to, and outlive the game erasing that state on death.
 _Avoid_: save, capture, dump
 
 ## The workspace

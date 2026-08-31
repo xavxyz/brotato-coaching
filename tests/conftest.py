@@ -48,7 +48,6 @@ _DISCOVERY_VARIABLES = (
     "STEAM_ID",
     "BROTATO_APPLICATION_SUPPORT",
     "BROTATO_INSTALL_DIR",
-    "BROTATO_RUN_STATE_PATH",
     "BROTATO_RUNS_DIR",
     "BROTATO_POLL_INTERVAL",
 )
@@ -102,8 +101,12 @@ def cli(tmp_path: Path) -> CliRunner:
         steam_id: str | None = None,
         install_dir: Path | str | None = None,
         cwd: Path | None = None,
+        runs_dir: Path | None = None,
     ) -> CliResult:
         environment = _isolated_environment()
+        # Always set, never defaulted: a subcommand that captures must not be
+        # able to reach the repo's committed `runs/` from a test.
+        environment["BROTATO_RUNS_DIR"] = str(runs_dir or tmp_path / "runs")
         if application_support is not None:
             environment["BROTATO_APPLICATION_SUPPORT"] = str(application_support)
         if steam_id is not None:
@@ -175,11 +178,20 @@ def run_state(
 
 
 class Workspace:
-    """A tmp directory standing in for the game's save directory and `runs/`."""
+    """A tmp application-support tree, plus the `runs/` the watcher fills.
+
+    Shaped like the real thing — a Steam-ID-named directory under an
+    application-support root — because the watcher now finds the live run state
+    by discovering that directory, rather than by being handed a path. A fixture
+    that was handed a path would exercise nothing.
+    """
 
     def __init__(self, root: Path) -> None:
         self.root = root
-        self.state_path = root / "run_v3_0.json"
+        self.application_support = root / "application-support" / "Brotato"
+        self.save_directory = self.application_support / PLACEHOLDER_STEAM_ID
+        self.save_directory.mkdir(parents=True)
+        self.state_path = self.save_directory / "run_v3_0.json"
         self.runs_dir = root / "runs"
 
     def write_state(self, payload: dict[str, Any]) -> None:
@@ -195,7 +207,7 @@ class Workspace:
     def environment(self) -> dict[str, str]:
         return {
             **_isolated_environment(),
-            "BROTATO_RUN_STATE_PATH": str(self.state_path),
+            "BROTATO_APPLICATION_SUPPORT": str(self.application_support),
             "BROTATO_RUNS_DIR": str(self.runs_dir),
             "BROTATO_POLL_INTERVAL": "0.05",
         }
@@ -206,6 +218,7 @@ class Workspace:
             capture_output=True,
             text=True,
             env=self.environment(),
+            cwd=self.root,
         )
 
     def json_cli(self, *args: str) -> Any:

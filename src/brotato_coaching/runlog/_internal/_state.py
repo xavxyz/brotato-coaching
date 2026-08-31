@@ -13,6 +13,9 @@ from pathlib import Path
 from typing import Any
 
 
+LIVE_RUN_STATE_FILENAME = "run_v3_0.json"
+
+
 class UnreadableState(Exception):
     """The file exists but is not JSON — usually the game mid-write."""
 
