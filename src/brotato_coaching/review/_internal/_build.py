@@ -119,8 +119,14 @@ def wave_count(state: Mapping[str, Any]) -> int | None:
     return _number(_run(state).get("nb_of_waves"))
 
 
-def wave(state: Mapping[str, Any]) -> int | None:
-    return _number(_run(state).get("current_wave"))
+def wave_in_progress(state: Mapping[str, Any]) -> int | None:
+    """The wave this state was captured in.
+
+    The game's `current_wave` counts waves *cleared*, so the wave being played
+    is one past it.
+    """
+    cleared = _number(_run(state).get("current_wave"))
+    return None if cleared is None else cleared + 1
 
 
 def curve_entry(state: Mapping[str, Any]) -> dict[str, Any]:
@@ -132,7 +138,7 @@ def curve_entry(state: Mapping[str, Any]) -> dict[str, Any]:
     """
     player = _player(state)
     return {
-        "wave": wave(state),
+        "wave": wave_in_progress(state),
         "level": _number(player.get("current_level")),
         "health": _number(player.get("current_health")),
         "gold": _number(player.get("gold")),

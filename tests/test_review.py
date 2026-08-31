@@ -469,7 +469,9 @@ class TestTheCommittedRun:
 
         assert briefing["character"] == "character_crazy"
         assert briefing["danger"] == 5
-        assert briefing["waves"] == {"reached": 19, "of": 20}
+        # The last snapshot is the shop after wave 19 — the start of wave 20,
+        # which the save confirms this run went on to win.
+        assert briefing["waves"] == {"reached": 20, "of": 20}
         # The game stores that weapon's tier as "3"; a review reports the tier
         # the player was looking at.
         assert briefing["weapons"][0] == {
@@ -478,4 +480,4 @@ class TestTheCommittedRun:
             "count": 4,
         }
         assert briefing["final_stats"]["stat_max_hp"] == 60
-        assert briefing["curve"][-1]["wave"] == 19
+        assert briefing["curve"][-1]["wave"] == 20
