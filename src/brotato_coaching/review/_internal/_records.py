@@ -1,0 +1,221 @@
+"""Run records on disk: one file per reviewed run, and the questions they answer.
+
+    records/
+      20260830T193810Z-character_crazy.json
+
+A record is written in one fixed schema, because "you have died this way four
+times" has to be a query rather than a vibe, and because a run reviewed a year
+ago has to still be readable when the player's model has improved enough to
+re-diagnose it.
+
+The ordering rule lives here rather than in the CLI: a diagnosis without a
+hypothesis already recorded is refused, so the seam that enforces it is the same
+one that writes the file.
+"""
+
+import json
+from collections import Counter
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+SCHEMA_VERSION = 1
+
+# The fixed schema, in the order a record reads on the page: what the run was,
+# what was read off it, then what the player and the review said about it.
+_FACTS = (
+    "run_id",
+    "character",
+    "danger",
+    "zone",
+    "patch",
+    "waves",
+    "weapons",
+    "items",
+    "key_items",
+    "final_stats",
+    "death_causes",
+)
+
+
+class HypothesisMissing(Exception):
+    """No hypothesis is on record that has not already been diagnosed.
+
+    Covers both ways the ordering can be broken: diagnosing a run nobody has
+    written a read of, and diagnosing one a second time without committing to a
+    fresh read first. They are one rule — a diagnosis follows a hypothesis that
+    was written without sight of it — so they are one exception.
+    """
+
+
+class DamagedRecord(Exception):
+    """A record exists but will not parse, so writing would destroy it."""
+
+
+@dataclass(frozen=True)
+class Records:
+    """Every read and write under `records/` goes through here."""
+
+    directory: Path
+
+    def read(self, run_id: str) -> dict[str, Any] | None:
+        """The record for a run, or `None` if it has never been reviewed.
+
+        A file that exists but will not parse raises rather than reading as
+        "never reviewed": that answer would have the next hypothesis silently
+        overwrite a record the player had damaged by hand, and a record is data
+        that only exists here.
+        """
+        path = self._path(run_id)
+        if not path.is_file():
+            return None
+        try:
+            record = json.loads(path.read_text())
+        except ValueError as error:
+            raise DamagedRecord(f"{path} is not readable JSON: {error}") from error
+        if not isinstance(record, dict):
+            raise DamagedRecord(f"{path} does not hold a run record")
+        return record
+
+    def write_hypothesis(self, facts: dict[str, Any], text: str) -> dict[str, Any]:
+        """Record the player's read of the run, and only then open it to diagnosis.
+
+        Recording a hypothesis against a run that already has a diagnosis is a
+        re-diagnosis: the previous review moves into `revisions` rather than
+        being overwritten, so improving a model never costs the evidence that it
+        has improved. Recording one against a run not yet diagnosed is a
+        correction, and simply replaces it.
+        """
+        existing = self.read(facts["run_id"]) or _blank()
+        revisions = list(existing.get("revisions") or [])
+        if existing.get("diagnosis") is not None:
+            revisions.append(
+                {
+                    key: existing.get(key)
+                    for key in ("hypothesis", "diagnosis", "change")
+                }
+            )
+        record = {
+            "schema_version": SCHEMA_VERSION,
+            # The facts are refreshed from the run every time, so a re-diagnosis
+            # reads a record stamped with what is known now, not in the past.
+            **{key: facts.get(key) for key in _FACTS},
+            "hypothesis": _said(text),
+            "diagnosis": None,
+            "change": None,
+            "revisions": revisions,
+        }
+        return self._write(record)
+
+    def diagnose(self, run_id: str, *, diagnosis: str, change: str) -> dict[str, Any]:
+        """Write the diagnosis and the one change. Raises `HypothesisMissing`."""
+        record = self.read(run_id)
+        if record is None or record.get("hypothesis") is None:
+            raise HypothesisMissing(run_id)
+        if record.get("diagnosis") is not None:
+            # Already diagnosed, so the hypothesis on record was written before
+            # a diagnosis this player has now seen. Re-diagnosing needs a fresh
+            # one; that is the same rule, not a second one.
+            raise HypothesisMissing(run_id)
+        record["diagnosis"] = _said(diagnosis)
+        record["change"] = _said(change)
+        return self._write(record)
+
+    def all(self) -> list[dict[str, Any]]:
+        """Every readable record, oldest run first — ids sort by start time.
+
+        A damaged file is skipped here rather than raised: listing what has been
+        reviewed is a question the other records can still answer, and the one
+        that cannot is loud the moment it is reviewed again.
+        """
+        if not self.directory.is_dir():
+            return []
+        records = []
+        for path in sorted(self.directory.glob("*.json")):
+            try:
+                record = self.read(path.stem)
+            except DamagedRecord:
+                continue
+            if record is not None:
+                records.append({**record, "complete": _complete(record)})
+        return records
+
+    def _write(self, record: dict[str, Any]) -> dict[str, Any]:
+        self.directory.mkdir(parents=True, exist_ok=True)
+        self._path(record["run_id"]).write_text(
+            json.dumps(record, indent=2) + "\n", encoding="utf-8"
+        )
+        return {**record, "complete": _complete(record)}
+
+    def _path(self, run_id: str) -> Path:
+        return self.directory / f"{run_id}.json"
+
+
+def patterns(records: list[dict[str, Any]]) -> dict[str, Any]:
+    """What only several records can say: what keeps happening.
+
+    Death causes are the player's *lifetime* histogram out of the save, so they
+    are reported from the most recent record rather than summed across records,
+    which would count the same deaths once per review.
+    """
+    latest = records[-1] if records else None
+    return {
+        "runs_reviewed": len(records),
+        "by_character": _counts(record.get("character") for record in records),
+        "by_danger": _counts(record.get("danger") for record in records),
+        "by_final_wave": _counts(
+            (record.get("waves") or {}).get("reached") for record in records
+        ),
+        "repeated_deaths": _repeated_deaths(records),
+        "changes": [
+            {"text": text, "count": count}
+            for text, count in Counter(
+                record["change"]["text"] for record in records if record.get("change")
+            ).most_common()
+        ],
+        "latest_death_causes": (latest or {}).get("death_causes") or [],
+    }
+
+
+def _repeated_deaths(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The same character dying at the same wave, more than once.
+
+    The joint count, not two histograms a reader has to cross-reference: "you
+    have died this way four times" is one number, and a character histogram
+    beside a wave histogram cannot produce it.
+    """
+    counted = Counter(
+        (record.get("character"), (record.get("waves") or {}).get("reached"))
+        for record in records
+        if record.get("character") is not None
+    )
+    return [
+        {"character": character, "wave": wave, "count": count}
+        for (character, wave), count in counted.most_common()
+        if count > 1
+    ]
+
+
+def _blank() -> dict[str, Any]:
+    return {"revisions": [], "diagnosis": None, "hypothesis": None, "change": None}
+
+
+def _complete(record: dict[str, Any]) -> bool:
+    """A review is finished when it has cost the player one change to try."""
+    return record.get("change") is not None
+
+
+def _said(text: str) -> dict[str, str]:
+    """One line, and when it was written. The order is the whole point."""
+    return {"text": text.strip(), "recorded_at": _stamp()}
+
+
+def _stamp() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
+
+def _counts(values: Any) -> dict[str, int]:
+    """A histogram with JSON-safe keys, commonest first."""
+    counter = Counter(str(value) for value in values if value is not None)
+    return dict(counter.most_common())

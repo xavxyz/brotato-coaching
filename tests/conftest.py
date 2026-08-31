@@ -22,7 +22,12 @@ from typing import Any
 
 import pytest
 
-from brotato_coaching.gamedata import GameInstall, InstallNotFound, find_install
+from brotato_coaching.gamedata import (
+    GameInstall,
+    InstallNotFound,
+    find_install,
+    godot_hash,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 REAL_SAVE_ROOT = FIXTURES / "save"
@@ -51,6 +56,7 @@ _DISCOVERY_VARIABLES = (
     "BROTATO_APPLICATION_SUPPORT",
     "BROTATO_INSTALL_DIR",
     "BROTATO_RUNS_DIR",
+    "BROTATO_RECORDS_DIR",
     "BROTATO_DRILLS_DIR",
     "BROTATO_POLL_INTERVAL",
     "BROTATO_DATA_DIR",
@@ -107,12 +113,16 @@ def cli(tmp_path: Path) -> CliRunner:
         data_directory: Path | str | None = None,
         cwd: Path | None = None,
         runs_dir: Path | None = None,
+        records_dir: Path | None = None,
         drills_dir: Path | None = None,
     ) -> CliResult:
         environment = _isolated_environment()
         # Always set, never defaulted: a subcommand that writes must not be able
         # to reach the repo's committed `runs/` or `drills/` from a test.
         environment["BROTATO_RUNS_DIR"] = str(runs_dir or tmp_path / "runs")
+        # The same reasoning for run records and prep drills: a test that
+        # reviews or drills must not be able to write into the repo's own.
+        environment["BROTATO_RECORDS_DIR"] = str(records_dir or tmp_path / "records")
         environment["BROTATO_DRILLS_DIR"] = str(drills_dir or tmp_path / "drills")
         if data_directory is not None:
             environment["BROTATO_DATA_DIR"] = str(data_directory)
@@ -178,11 +188,19 @@ def run_state(
     zone: int = 0,
     gold: int = 0,
     weapons: tuple[str, ...] = ("weapon_shuriken_1",),
+    items: tuple[str, ...] = (),
+    stats: dict[str, int] | None = None,
+    level: int = 1,
+    health: int = 10,
 ) -> dict[str, Any]:
     """One hand-written live run state, shaped like the real file's fields.
 
-    Only the fields the watcher reasons about are spelled out; the real file
-    carries far more, and the watcher copies it whole either way.
+    Only the fields the watcher and a review reason about are spelled out; the
+    real file carries far more, and the watcher copies it whole either way.
+
+    `stats` is written the way the game writes it — an `effects` map keyed by
+    the Godot hash of the stat name — so a test that hands over `stat_armor` is
+    asserting against the real encoding rather than a convenient one.
     """
     return {
         "current_run_state": {
@@ -196,11 +214,42 @@ def run_state(
                 {
                     "current_character": character,
                     "gold": gold,
-                    "weapons": [{"my_id": weapon} for weapon in weapons],
+                    "current_level": level,
+                    "current_health": health,
+                    "weapons": [_weapon(weapon) for weapon in weapons],
+                    "items": [{"my_id": item} for item in items],
+                    "effects": {
+                        str(godot_hash(stat)): value
+                        for stat, value in (stats or {}).items()
+                    },
                 }
             ],
         }
     }
+
+
+def _weapon(identifier: str) -> dict[str, Any]:
+    """One weapon entry, tiered the way the game tiers it.
+
+    The game stores the tier zero-based and as a string: `weapon_shuriken_4` is
+    a tier-4 weapon written `"tier": "3"`. A fixture that tidied that up would
+    hide exactly the conversion worth testing.
+    """
+    suffix = identifier.rsplit("_", 1)[-1]
+    stored = int(suffix) - 1 if suffix.isdigit() else 0
+    return {
+        "my_id": identifier,
+        "name": identifier.rsplit("_", 1)[0].upper(),
+        "tier": str(max(stored, 0)),
+        "dmg_dealt_last_wave": "0",
+    }
+
+
+# The one real run captured start to finish, committed with ADR-0001. A test
+# that reviews it is checking the reader against the game's own output rather
+# than against a fixture written to suit it.
+REPO_RUNS = Path(__file__).parent.parent / "runs"
+COMMITTED_RUN = "20260830T193810Z-character_crazy"
 
 
 class Workspace:
@@ -219,6 +268,10 @@ class Workspace:
         self.save_directory.mkdir(parents=True)
         self.state_path = self.save_directory / "run_v3_0.json"
         self.runs_dir = root / "runs"
+        self.records_dir = root / "records"
+        # Set by a test that wants ids resolved to names; left unset, the
+        # workspace behaves like a machine that has never run `extract`.
+        self.data_dir: Path | None = None
 
     def write_state(self, payload: dict[str, Any]) -> None:
         self.state_path.write_text(json.dumps(payload))
@@ -231,10 +284,13 @@ class Workspace:
         self.state_path.unlink(missing_ok=True)
 
     def environment(self) -> dict[str, str]:
+        data = {"BROTATO_DATA_DIR": str(self.data_dir)} if self.data_dir else {}
         return {
             **_isolated_environment(),
+            **data,
             "BROTATO_APPLICATION_SUPPORT": str(self.application_support),
             "BROTATO_RUNS_DIR": str(self.runs_dir),
+            "BROTATO_RECORDS_DIR": str(self.records_dir),
             "BROTATO_POLL_INTERVAL": "0.05",
         }
 

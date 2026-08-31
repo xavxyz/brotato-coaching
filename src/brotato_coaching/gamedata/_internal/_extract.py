@@ -13,9 +13,9 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from ._catalog import build_catalog
+from ._catalog import CATALOGUE_NAMES, build_catalog
 from ._container import open_container
-from ._install import GameInstall
+from ._install import UNKNOWN_VERSION, GameInstall
 
 ABYSSAL_TERRORS_SOURCE = "abyssal_terrors"
 BASE_SOURCE = "base"
@@ -63,6 +63,26 @@ def extract(install: GameInstall, destination: Path) -> Extraction:
         counts=counts,
         sources=tuple(containers),
     )
+
+
+def read_version(directory: Path) -> str:
+    """The patch the catalogues in `directory` were extracted from.
+
+    The counterpart to the stamp `extract` writes: a report about a run wants to
+    say which patch its numbers were true for, and the extraction is the only
+    thing on disk that knows. A directory that was never extracted answers
+    `UNKNOWN_VERSION` rather than raising, for the same reason `read_names`
+    returns an empty book — a stamp is a convenience, not a precondition.
+    """
+    for catalogue in CATALOGUE_NAMES:
+        try:
+            document = json.loads((directory / f"{catalogue}.json").read_text())
+        except (OSError, ValueError):
+            continue
+        version = document.get("game_version") if isinstance(document, dict) else None
+        if isinstance(version, str) and version:
+            return version
+    return UNKNOWN_VERSION
 
 
 def _source_name(container: Path) -> str:

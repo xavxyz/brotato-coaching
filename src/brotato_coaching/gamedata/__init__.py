@@ -18,10 +18,12 @@ The package also owns the hash the game writes ids as. A save holds integers;
 `godot_hash` is the algorithm itself. A directory that was never extracted gives
 an empty book rather than an error, so a caller can report raw ids and carry on.
 
-`read_catalog` reads an extraction back the other way, as the `Catalog` the
-entities were written from — patch stamp included — for a caller that wants the
-numbers themselves rather than the names. A directory that was never extracted
-gives a catalogue with nothing in it rather than an error.
+`read_version` reads that stamp back off an extraction, so a report can say
+which patch its numbers were true for. `read_catalog` reads one back the other
+way in full, as the `Catalog` the entities were written from — patch stamp
+included — for a caller that wants the numbers themselves rather than the names.
+A directory that was never extracted gives a catalogue with nothing in it rather
+than an error.
 
 A caller with containers of its own — a test, a second install — builds a
 `GameInstall` directly and passes it in.
@@ -30,7 +32,7 @@ Output belongs in `data/`, which is gitignored: it is the publisher's content.
 """
 
 from ._internal._catalog import Catalog, read_catalog
-from ._internal._extract import Extraction, extract
+from ._internal._extract import Extraction, extract, read_version
 from ._internal._install import (
     INSTALL_DIR_VARIABLE,
     UNKNOWN_VERSION,
@@ -50,7 +52,8 @@ __all__ = [
     "NameBook",
     "extract",
     "find_install",
-    "read_catalog",
     "godot_hash",
+    "read_catalog",
     "read_names",
+    "read_version",
 ]

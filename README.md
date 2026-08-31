@@ -38,7 +38,7 @@ uv run brotato --help
 
 `brotato` and `brotato-coaching` are the same command.
 
-## The five subcommands
+## The subcommands
 
 ```sh
 uv run brotato progress                 # your save: progress per character, deaths, purchases, totals
@@ -46,6 +46,8 @@ uv run brotato extract                  # game data -> data/ (gitignored: it is 
 uv run brotato watch                    # capture snapshots until you stop it (Ctrl-C)
 uv run brotato runs                     # list every captured run
 uv run brotato runs <run-id>            # one run's snapshots, read back whole
+uv run brotato review                   # the latest dead run, read back: build, curve, death causes
+uv run brotato records                  # every reviewed run, and the patterns that recur
 uv run brotato prep                     # the derivation drill, on a character chosen from your save
 ```
 
@@ -57,6 +59,17 @@ uv run brotato watch --status           # is it running, and what has it caught?
 uv run brotato watch --stop             # stop it, and report the session it just finished
 uv run brotato watch --once             # make a single capture decision and exit
 ```
+
+`review` reads a dead run back, and it has an order it will not let you break:
+
+```sh
+uv run brotato review                                        # the briefing: what happened, nothing concluded
+uv run brotato review --hypothesis "I never scaled damage"   # your read, on record first
+uv run brotato review --diagnosis "..." --change "..."       # refused until a hypothesis is recorded
+```
+
+The refusal is the feature: seeing a diagnosis first would let you quietly revise your read,
+and the gap between the two is where the learning is. `/brotato-review` drives this loop.
 
 `prep` is the drill `/brotato-prep` runs. It shows a character's modifiers and starting
 weapon with every trace of its name removed, takes four committed predictions, and only
@@ -74,6 +87,11 @@ uv run brotato prep --history           # prediction hit rate, per dimension, ov
 A subcommand exits non-zero only when it could not do what it was asked. "No run in
 progress", "nothing captured", "no watcher running" are JSON on stdout and an exit code of
 zero — reporting them *is* the job.
+
+**Ids read as names once you have extracted.** `deaths` and `items_bought` are keyed in the
+save by the integer hashes the game uses internally; resolving them is the join between the
+save and `data/`. Before a first `extract` they come out as digits, which is a report worth
+having rather than an error.
 
 ## Configuration
 
@@ -99,7 +117,9 @@ error messages deliberately do not echo it back.
 | `docs/adr/` | Decisions, with the context that produced them. |
 | `docs/research/` | Research passes: stat mechanics, shop economy, wave scaling, weapon classes. |
 | `runs/` | Captured runs. Committed — they are the player's own data. |
+| `records/` | Run records: one per reviewed run, in a fixed schema. Committed. |
 | `drills/` | Prep drills and their verdicts. Committed, for the same reason. |
+| `learning-records/` | Written only when the player's model of the game actually changed. |
 | `lessons/`, `assets/` | Teaching artefacts and their styling. |
 | `reference/` | Reference docs: one printable page per concept. Every number in one is re-derived from the installed game by the test suite. |
 | `src/brotato_coaching/` | The tooling. Its README documents the package rules. |
