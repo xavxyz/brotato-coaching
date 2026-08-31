@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stats and damage math — Brotato coaching</title>
+    <link rel="stylesheet" href="../assets/lesson.css" />
+    <!-- Not deferred: the stored theme must be applied before the first paint. -->
+    <script src="../assets/lesson.js"></script>
+  </head>
+  <body class="reference-doc">
+    <header class="page-header">
+      <div class="page-header__text">
+        <h1>Stats and damage math</h1>
+        <p class="subtitle">
+          What a number on a stat screen actually does to a number on an enemy. Concept-level:
+          nothing here is about a particular potato.
+        </p>
+        <p class="patch-stamp">
+          Brotato <span data-claim="game-version">1.1.12.0.beta-3</span> ·
+          <span data-claim="count:weapons">258</span> weapon entries
+          (<span data-claim="count:weapon-families">79</span> families × tiers),
+          <span data-claim="count:items">247</span> items,
+          <span data-claim="count:characters">64</span> characters
+        </p>
+      </div>
+      <button class="theme-toggle" hidden aria-label="Switch theme">
+        <span class="theme-toggle__icon" aria-hidden="true">◑</span>
+        <span class="theme-toggle__label"></span>
+      </button>
+    </header>
+
+    <main>
+      <div class="callout">
+        <p class="callout__title">The one sentence</p>
+        <p>
+          A weapon has a base damage and a short list of stats it scales with, each with its own
+          coefficient. Flat stats are <strong>added</strong> through those coefficients;
+          % Damage <strong>multiplies</strong> what that sum produced; crit multiplies again. A
+          stat not on the weapon's list does nothing for that weapon, whatever the stat screen
+          implies.
+        </p>
+      </div>
+
+      <h2>1 · The order it computes in</h2>
+
+      <ol>
+        <li><strong>Base.</strong> The weapon's own damage at its tier.</li>
+        <li>
+          <strong>Flat scaling, added.</strong> For each stat on the weapon's scaling list,
+          <code>+ (your stat × that weapon's coefficient)</code>. Several stats may be listed;
+          all add into the same total.
+          <span class="source-note">Interpretation STAT-S1, STAT-S2; coefficients extracted.</span>
+        </li>
+        <li>
+          <strong>% Damage, multiplied.</strong> Against the sum from 1–2, not the base alone.
+          % Damage and % Explosion Damage stack additively with each other first.
+          <span class="source-note">STAT-S1, STAT-S2, STAT-S3.</span>
+        </li>
+        <li>
+          <strong>Crit, multiplied.</strong> Per-weapon chance, per-weapon multiplier. There is no
+          global crit-damage stat. <span class="source-note">STAT-S2, STAT-S11.</span>
+        </li>
+        <li>
+          <strong>Floor 1.</strong> Minimum damage from any weapon or effect.
+          <span class="source-note">STAT-S1, STAT-S3, STAT-S13.</span>
+        </li>
+      </ol>
+
+      <h2>2 · Reading a scaling line</h2>
+
+      <p>
+        The tooltip's <code>20 (80% Melee)</code> means: coefficient 0.8 on Melee Damage. The
+        percentage is a literal multiplier on the stat, not on the damage.
+        <span class="source-note">STAT-S2.</span>
+      </p>
+
+      <p>
+        <strong>Knife IV, the clean case</strong> — one scaling stat, nothing else.
+        Base <span data-claim="weapon:weapon_knife_4:damage">25</span>, coefficient
+        <span data-claim="weapon:weapon_knife_4:scaling:stat_melee_damage">0.8</span>. At 30 Melee
+        Damage that is 25 + (30 × 0.8) = <strong>49</strong> a hit, before % Damage. Its crit is
+        <span data-claim="weapon:weapon_knife_4:crit_chance#pct">50</span>% for
+        ×<span data-claim="weapon:weapon_knife_4:crit_damage">4</span>, so 196 when it lands —
+        both halves scale with tier, since Knife I is only
+        <span data-claim="weapon:weapon_knife_1:crit_chance#pct">20</span>% for
+        ×<span data-claim="weapon:weapon_knife_1:crit_damage">2.5</span>.
+      </p>
+
+      <p>
+        <strong>The trap:</strong> the melee/ranged label is cosmetic for scaling — a weapon
+        scales with what its own list says, nothing else. Harpoon Gun IV is ranged and scales with
+        <em>both</em> Ranged
+        (<span data-claim="weapon:weapon_harpoon_gun_4:scaling:stat_ranged_damage">1</span>) and
+        Melee (<span data-claim="weapon:weapon_harpoon_gun_4:scaling:stat_melee_damage">1</span>).
+        <span class="source-note">STAT-S2, STAT-S19; confirmed in extracted data.</span>
+      </p>
+
+      <h2>3 · What a weapon can scale off</h2>
+
+      <p>
+        Fifteen stats appear as scaling stats across the catalogue — not the eight the guides
+        list. The third column is the largest coefficient any single weapon entry carries, which
+        is where the outliers live.
+        <span class="source-note">Counts extracted; the notes column reads them — STAT-S1, STAT-S2, STAT-S15.</span>
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Scaling stat</th>
+            <th>Weapon entries</th>
+            <th>Biggest coefficient</th>
+            <th>Worth knowing</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Melee Damage</td>
+            <td><span data-claim="scaling-count:stat_melee_damage">164</span></td>
+            <td><span data-claim="scaling-max:stat_melee_damage">2</span></td>
+            <td>The default; 0.5 and 1.0 dominate</td>
+          </tr>
+          <tr>
+            <td>Ranged Damage</td>
+            <td><span data-claim="scaling-count:stat_ranged_damage">73</span></td>
+            <td><span data-claim="scaling-max:stat_ranged_damage">15</span></td>
+            <td>Widest spread of any stat — §4</td>
+          </tr>
+          <tr>
+            <td>Elemental Damage</td>
+            <td><span data-claim="scaling-count:stat_elemental_damage">34</span></td>
+            <td><span data-claim="scaling-max:stat_elemental_damage">2</span></td>
+            <td>Also drives burn</td>
+          </tr>
+          <tr>
+            <td>Engineering</td>
+            <td><span data-claim="scaling-count:stat_engineering">21</span></td>
+            <td><span data-claim="scaling-max:stat_engineering">2</span></td>
+            <td>Weapons too, not just structures — §6</td>
+          </tr>
+          <tr>
+            <td>Max HP</td>
+            <td><span data-claim="scaling-count:stat_max_hp">12</span></td>
+            <td><span data-claim="scaling-max:stat_max_hp">2</span></td>
+            <td>Defence that is also offence</td>
+          </tr>
+          <tr>
+            <td>Attack Speed</td>
+            <td><span data-claim="scaling-count:stat_attack_speed">11</span></td>
+            <td><span data-claim="scaling-max:stat_attack_speed">0.3</span></td>
+            <td>
+              Can be <em>negative</em>: Mace IV scales
+              <span data-claim="weapon:weapon_mace_4:scaling:stat_attack_speed">-1</span>, so
+              Attack Speed costs it damage
+            </td>
+          </tr>
+          <tr>
+            <td>Range</td>
+            <td><span data-claim="scaling-count:stat_range">10</span></td>
+            <td><span data-claim="scaling-max:stat_range">0.3</span></td>
+            <td>Small, but Range is bought in hundreds</td>
+          </tr>
+          <tr>
+            <td>Curse</td>
+            <td><span data-claim="scaling-count:stat_curse">8</span></td>
+            <td><span data-claim="scaling-max:stat_curse">1.25</span></td>
+            <td>Abyssal Terrors only</td>
+          </tr>
+          <tr>
+            <td>Luck</td>
+            <td><span data-claim="scaling-count:stat_luck">8</span></td>
+            <td><span data-claim="scaling-max:stat_luck">0.25</span></td>
+            <td>Settles STAT-Q6: Luck <em>is</em> a scaling stat</td>
+          </tr>
+          <tr>
+            <td>Life Steal</td>
+            <td><span data-claim="scaling-count:stat_lifesteal">7</span></td>
+            <td><span data-claim="scaling-max:stat_lifesteal">1</span></td>
+            <td>Sustain that is also damage</td>
+          </tr>
+          <tr>
+            <td>Level</td>
+            <td><span data-claim="scaling-count:stat_levels">4</span></td>
+            <td><span data-claim="scaling-max:stat_levels">1.25</span></td>
+            <td>Scales free as the run goes on</td>
+          </tr>
+          <tr>
+            <td>Speed</td>
+            <td><span data-claim="scaling-count:stat_speed">4</span></td>
+            <td><span data-claim="scaling-max:stat_speed">0.5</span></td>
+            <td>Movement priced as damage</td>
+          </tr>
+          <tr>
+            <td>Dodge</td>
+            <td><span data-claim="scaling-count:stat_dodge">4</span></td>
+            <td><span data-claim="scaling-max:stat_dodge">0.45</span></td>
+            <td>Dodge caps (§8); the scaling does not</td>
+          </tr>
+          <tr>
+            <td>Harvesting</td>
+            <td><span data-claim="scaling-count:stat_harvesting">4</span></td>
+            <td><span data-claim="scaling-max:stat_harvesting">0.25</span></td>
+            <td>Economy stat that pays twice</td>
+          </tr>
+          <tr>
+            <td>Armor</td>
+            <td><span data-claim="scaling-count:stat_armor">4</span></td>
+            <td><span data-claim="scaling-max:stat_armor">2</span></td>
+            <td>Defence to offence, at a high rate</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>4 · Coefficients decide what a stat is worth</h2>
+
+      <p>
+        A point of Ranged Damage is not a fixed amount of damage; it is worth whatever the weapon
+        in your hands says. At tier IV the spread is a factor of twenty. Obliterator takes it at
+        ×<span data-claim="weapon:weapon_obliterator_4:scaling:stat_ranged_damage">15</span> on a
+        base of <span data-claim="weapon:weapon_obliterator_4:damage">400</span> and Laser Gun at
+        ×<span data-claim="weapon:weapon_laser_gun_4:scaling:stat_ranged_damage">6</span>, while
+        SMG takes <span data-claim="weapon:weapon_smg_4:scaling:stat_ranged_damage">0.8</span> on a
+        base of <span data-claim="weapon:weapon_smg_4:damage">8</span> and Minigun
+        <span data-claim="weapon:weapon_minigun_4:scaling:stat_ranged_damage">0.75</span>. Twenty
+        Ranged Damage is +300 to the first and +15 to the last. The low-coefficient weapons are the
+        fast ones, and the comparison only closes once you multiply by fire rate — §5, where the
+        arithmetic stops being trustworthy.
+        <span class="source-note">Numbers extracted; reading them, STAT-S2, STAT-S4.</span>
+      </p>
+
+      <h2>5 · Attack Speed, and why the number lies</h2>
+
+      <p>
+        The rule of thumb is +100% Attack Speed halves the cooldown.
+        <span class="source-note">STAT-S1, STAT-S4.</span>
+        The weapon's stored <code>cooldown</code> is in frames at 60 fps, so Sniper Gun IV's
+        <span data-claim="weapon:weapon_sniper_gun_4:cooldown">120</span> frames is
+        <span data-claim="weapon:weapon_sniper_gun_4:cooldown#seconds">2</span> s and Chainsaw
+        IV's <span data-claim="weapon:weapon_chainsaw_4:cooldown">2</span> frames is
+        <span data-claim="weapon:weapon_chainsaw_4:cooldown#seconds">0.03</span> s.
+      </p>
+
+      <p>
+        That second figure is plainly not 30 attacks per second, which is the point of this
+        section: <strong>the cooldown is not the attack interval.</strong> Animation and recoil
+        overhead sit on top, and at high Attack Speed they are nearly all of it.
+        <span class="source-note">
+          Datamined from <code>ranged_weapon_stats.gd</code> / <code>melee_weapon_stats.gd</code>,
+          two independent sources: STAT-S5, STAT-S6.
+        </span>
+      </p>
+
+      <pre><code>ranged: (cooldown / 60) + recoil_duration * 2
+melee : (cooldown / 60) + recoil_duration + atk_duration / 2 + back_duration
+  back_duration = 0.2 / (1 + AS * 3)
+  atk_duration  = max(0.01, 0.2 - AS / 10) + range_factor * 0.15
+  range_factor  = max(0, (max_range + Range / 2) / clamp(70 * (1 + AS / 3), 70, 120))</code></pre>
+
+      <p>
+        <code>AS</code> is a fraction: 1.0 is +100%. Read three things off it:
+      </p>
+
+      <ul>
+        <li>
+          <strong>Recoil is a flat floor, and it varies per weapon.</strong> Most weapons sit at
+          <span data-claim="weapon:weapon_pistol_1:recoil_duration">0.1</span> s. The extremes:
+          Chainsaw <span data-claim="weapon:weapon_chainsaw_4:recoil_duration">0.01</span>,
+          Minigun and Flamethrower
+          <span data-claim="weapon:weapon_minigun_4:recoil_duration">0.02</span>, SMG
+          <span data-claim="weapon:weapon_smg_4:recoil_duration">0.05</span>, and at the slow end
+          Sniper Gun, Laser Gun and Obliterator
+          <span data-claim="weapon:weapon_sniper_gun_4:recoil_duration">0.2</span>. On a ranged
+          weapon recoil is paid <em>twice</em>, so a 0.2 s recoil is a hard 0.4 s ceiling on fire
+          rate no matter how much Attack Speed you buy.
+        </li>
+        <li>
+          <strong>Diminishing returns are per weapon, not one global curve.</strong> Weapons whose
+          cooldown is already near zero — fast melee and fast ranged — are in diminishing returns
+          from 0% Attack Speed onward, because the overhead terms already dominate. Fast ranged
+          suffers more.
+          <span class="source-note">STAT-S4.</span>
+        </li>
+        <li>
+          <strong>Range slows melee down.</strong> <code>range_factor</code> puts weapon range and
+          half your Range stat into the attack animation: roughly 3–10% attack speed per +100
+          Range. Attack Speed partially buys it back, saturating at +200%.
+          <span class="source-note">STAT-S4, STAT-S5, STAT-S6, STAT-S12.</span>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <p class="callout__title">Known gap — do not compute DPS from the formulas above</p>
+        <p>
+          None of these show Attack Speed applied to the <code>cooldown / 60</code> term itself;
+          that multiplier is unpublished (STAT-Q2) and the constants are from 2022–23 (STAT-Q7).
+          Use them to <em>rank</em> weapons and to see <em>why</em> Attack Speed stops paying,
+          never for an absolute number.
+        </p>
+      </div>
+
+      <h2>6 · Engineering and structures</h2>
+
+      <ul>
+        <li>
+          <strong>Engineering is the only primary stat structures scale with.</strong> Turrets and
+          landmines ignore Melee, Ranged, Elemental, % Damage and Attack Speed — but they do take
+          secondary stats and item effects: piercing, bouncing, knockback, slow, explosion damage
+          and size, burn, burn spread.
+          <span class="source-note">STAT-S1, STAT-S8, STAT-S9, STAT-S10.</span>
+        </li>
+        <li>
+          Same additive pattern as weapons: Turret <code>10 + (80% Eng)</code> every 0.73 s,
+          Landmines <code>10 (+100%)</code>, Laser Turret <code>20 (+125%)</code>, Explosive
+          Turret <code>25 (+150%)</code>. Fire rates randomise to 70–130% per shot, so those
+          intervals are averages.
+          <span class="source-note">
+            STAT-S8, STAT-S9, STAT-S10 — structure damage is <em>not</em> in the extracted
+            catalogue, so these ride on a source's word, as do §5's constants and §8's caps.
+          </span>
+        </li>
+        <li>
+          <strong>Structure Attack Speed is a separate stat</strong> from Attack Speed. Improved
+          Tools converts 50% of your Attack Speed into it.
+          <span class="source-note">STAT-S8, STAT-S9.</span>
+        </li>
+        <li>
+          Structures cannot crit (unless you hold Pile of Books), and Incendiary Turret's burn
+          scales with Engineering but not % Damage.
+          <span class="source-note">STAT-S11, STAT-S14.</span>
+        </li>
+        <li>
+          <span data-claim="scaling-count:stat_engineering">21</span> weapon entries scale with
+          Engineering too — Brick, Chain Gun, Chainsaw, DEX-troyer, Drill, Particle Accelerator,
+          Plank, Screwdriver, War Hammer, the last at
+          ×<span data-claim="weapon:weapon_war_hammer_4:scaling:stat_engineering">2</span>, equal
+          to its Melee coefficient.
+        </li>
+      </ul>
+
+      <h2>7 · Crit</h2>
+
+      <p>
+        Both halves of a crit are properties of the weapon. Buying "crit" buys chance only, and
+        what that chance is worth depends entirely on the multiplier attached to it.
+        <span class="source-note">STAT-S2, STAT-S11.</span>
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Tier-IV weapon</th>
+            <th>Chance</th>
+            <th>Multiplier</th>
+            <th>What it shows</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Knife</td>
+            <td><span data-claim="weapon:weapon_knife_4:crit_chance#pct">50</span>%</td>
+            <td>×<span data-claim="weapon:weapon_knife_4:crit_damage">4</span></td>
+            <td>
+              Scales with tier: Knife I is <span data-claim="weapon:weapon_knife_1:crit_chance#pct">20</span>% / ×<span
+                data-claim="weapon:weapon_knife_1:crit_damage"
+                >2.5</span
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>Sniper Gun</td>
+            <td><span data-claim="weapon:weapon_sniper_gun_4:crit_chance#pct">20</span>%</td>
+            <td>×<span data-claim="weapon:weapon_sniper_gun_4:crit_damage">4</span></td>
+            <td>Crit is most of its damage</td>
+          </tr>
+          <tr>
+            <td>Fist</td>
+            <td><span data-claim="weapon:weapon_fist_4:crit_chance#pct">1</span>%</td>
+            <td>×<span data-claim="weapon:weapon_fist_4:crit_damage">1.5</span></td>
+            <td>Crit Chance is near-worthless here</td>
+          </tr>
+          <tr>
+            <td>Wand</td>
+            <td><span data-claim="weapon:weapon_wand_4:crit_chance#pct">0</span>%</td>
+            <td>—</td>
+            <td>Five families cannot crit</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        <strong>Crits:</strong> every weapon hit and projectile, each pierce and each bounce
+        independently, all explosions, item projectiles. <strong>Does not:</strong> structures,
+        burn, randomly-targeted item damage.
+        <span class="source-note">STAT-S11, STAT-S14.</span>
+      </p>
+
+      <h2>8 · Caps, floors and the rest</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Stat</th>
+            <th>Limit</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Damage output</td>
+            <td>Floor 1</td>
+            <td>However negative the modifiers go</td>
+          </tr>
+          <tr>
+            <td>Crit Chance</td>
+            <td>0–100%</td>
+            <td>Negative crit subtracts from the weapon's base</td>
+          </tr>
+          <tr>
+            <td>Dodge</td>
+            <td>60%</td>
+            <td>70% and 90% on two characters</td>
+          </tr>
+          <tr>
+            <td>Armor</td>
+            <td>No cap</td>
+            <td>Each point = 6.66% more damage to kill you</td>
+          </tr>
+          <tr>
+            <td>Range</td>
+            <td>Minimum 25, no cap</td>
+            <td>Ranged gets <code>weapon + Range</code>; melee gets <code>weapon + Range/2</code></td>
+          </tr>
+          <tr>
+            <td>Life Steal</td>
+            <td>10 HP/s</td>
+            <td>One trigger per 0.1 s; burn cannot life steal</td>
+          </tr>
+          <tr>
+            <td>Curse</td>
+            <td>50% / 15% / 300</td>
+            <td>Cursed-enemy chance, cursed-shop chance, HP scaling — cannot go negative</td>
+          </tr>
+          <tr>
+            <td>Structures</td>
+            <td>100 on the map</td>
+            <td>The ~3 shots/sec cap went in 1.1.0.0</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="source-note">Whole table: STAT-S1, STAT-S3, STAT-S11, STAT-S12, STAT-S13, STAT-S14, STAT-S16.</p>
+
+      <h2>9 · What this page does not know</h2>
+
+      <p>
+        <strong>STAT-Q2 — the Attack Speed cooldown expression</strong> is the big one: everything
+        in §5 is overhead, and the multiplier on the cooldown timer itself is unpublished.
+        <strong>STAT-Q1</strong> — sources contradict each other on whether a 12-attacks-per-second
+        cap exists; the datamined formulas show none. <strong>STAT-Q5</strong> — rounding of
+        fractional flat scaling is unknown; every worked example in the sources uses clean numbers.
+      </p>
+    </main>
+
+    <footer class="page-footer">
+      <p>
+        Reference doc · concept-level by design · every <code>data-claim</code> number is
+        re-derived from <code>brotato extract</code> on each test run; §5's constants and §8's
+        caps are the sourced exceptions.
+      </p>
+      <ul>
+        <li><a href="../RESOURCES.md">RESOURCES.md</a> — STAT-S* sources and STAT-Q* open questions</li>
+        <li><a href="../docs/research/stat-mechanics.md">docs/research/stat-mechanics.md</a> — the long-form findings this compresses</li>
+      </ul>
+    </footer>
+  </body>
+</html>

@@ -218,9 +218,9 @@ silent. Most resolve against extracted game data once ticket #6 lands — those 
    % Damage from floor to round (`STAT-S16`), so rounding makes the ordering observable. **→ #6**
 5. **STAT-Q5 — Rounding of fractional flat scaling.** `STAT-S2`'s example uses clean numbers (30 × 0.8 = 24).
    Nothing documents what happens to e.g. 25 Melee × 85% = 21.25. **→ #6**
-6. **STAT-Q6 — Is Luck a weapon scaling stat?** `STAT-S15` says some weapons scale damage with Luck;
-   `STAT-S2`'s scaling-icon legend does not list Luck. Either the legend is incomplete or the claim
-   covers only characters and items. **→ #6**
+6. **STAT-Q6 — Is Luck a weapon scaling stat?** *Resolved by extracted game data (#9): yes.* Eight
+   weapon entries carry `stat_luck` as a scaling stat, at coefficients 0.1–0.25. `STAT-S15` was
+   right and `STAT-S2`'s scaling-icon legend is incomplete.
 7. **STAT-Q7 — Datamined attack-speed constants are three and a half years old.** `STAT-S5`/`STAT-S6` are from
    0.6.1.6 (Dec 2022) against a 1.1.12.0.beta-3 install. The formula *shapes* are corroborated by
    present-day wiki text, but every constant should be treated as unverified. **→ #6**
