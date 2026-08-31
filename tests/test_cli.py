@@ -46,6 +46,7 @@ def test_extract_writes_json_into_the_destination(
     assert summary["counts"]["characters"] == 2
     assert sorted(path.name for path in destination.iterdir()) == [
         "characters.json",
+        "enemies.json",
         "items.json",
         "weapons.json",
     ]

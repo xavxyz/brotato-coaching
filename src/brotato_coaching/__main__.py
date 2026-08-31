@@ -22,13 +22,14 @@ from brotato_coaching.gamedata import (
     InstallNotFound,
     extract,
     find_install,
+    read_names,
 )
 from brotato_coaching.savefile import SaveUnavailable, read_progress
 
 from . import _paths
 from .runlog import AlreadyWatching, RunLog, UnknownRun
 
-DEFAULT_DATA_DIRECTORY = Path("data")
+DEFAULT_DATA_DIRECTORY = _paths.DEFAULT_DATA_DIRECTORY
 
 
 @dataclass(frozen=True)
@@ -88,18 +89,26 @@ def _extract(arguments: argparse.Namespace) -> int:
 
 
 def _progress(_arguments: argparse.Namespace) -> int:
-    """Report the save as JSON.
+    """Report the save as JSON, with ids named where the game data can name them.
 
-    The ids in `deaths` and `purchases` come out raw. Resolving them to names
-    is the join between `savefile` and `gamedata`, and it belongs here — but
-    the join is not built yet, so for now raw is all there is.
+    This is the join: `savefile` supplies the ids, `gamedata` owns the hash that
+    turns them back into names, and neither knows about the other. When nothing
+    has been extracted the book is empty and the ids stay raw — a report of
+    integers still answers most of the questions asked of it.
     """
     try:
         report = read_progress()
     except SaveUnavailable as unavailable:
         print(f"brotato-coaching: {unavailable}", file=sys.stderr)
         return 1
-    print(json.dumps(report.as_json_object(), indent=2))
+    names = read_names(_paths.data_directory())
+    if not names:
+        print(
+            "brotato-coaching: no extracted game data, so ids are reported raw; "
+            "`brotato-coaching extract` gives them names",
+            file=sys.stderr,
+        )
+    print(json.dumps(report.as_json_object(names.name_for), indent=2))
     return 0
 
 

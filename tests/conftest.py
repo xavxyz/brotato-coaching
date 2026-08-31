@@ -51,6 +51,7 @@ _DISCOVERY_VARIABLES = (
     "BROTATO_RUN_STATE_PATH",
     "BROTATO_RUNS_DIR",
     "BROTATO_POLL_INTERVAL",
+    "BROTATO_DATA_DIR",
 )
 
 
@@ -101,9 +102,12 @@ def cli(tmp_path: Path) -> CliRunner:
         application_support: Path | str | None = None,
         steam_id: str | None = None,
         install_dir: Path | str | None = None,
+        data_directory: Path | str | None = None,
         cwd: Path | None = None,
     ) -> CliResult:
         environment = _isolated_environment()
+        if data_directory is not None:
+            environment["BROTATO_DATA_DIR"] = str(data_directory)
         if application_support is not None:
             environment["BROTATO_APPLICATION_SUPPORT"] = str(application_support)
         if steam_id is not None:
@@ -136,6 +140,23 @@ def real_save_root(save_root: Path) -> Path:
     destination = save_root / PLACEHOLDER_STEAM_ID
     shutil.copytree(REAL_SAVE_ROOT / PLACEHOLDER_STEAM_ID, destination)
     return save_root
+
+
+def write_game_data(directory: Path, **catalogues: list[str]) -> Path:
+    """An extracted `data/` directory holding only the ids a test cares about.
+
+    Shaped exactly like what `extract` writes — a catalogue name, a version
+    stamp, a list of entities — so a test that fakes it is still asserting
+    against the real contract.
+    """
+    directory.mkdir(parents=True, exist_ok=True)
+    for name, identifiers in catalogues.items():
+        document = {
+            "game_version": "1.2.3-test",
+            name: [{"id": identifier} for identifier in identifiers],
+        }
+        (directory / f"{name}.json").write_text(json.dumps(document), encoding="utf-8")
+    return directory
 
 
 NO_RUN_IN_PROGRESS: dict[str, Any] = {"current_run_state": {"has_run_state": False}}

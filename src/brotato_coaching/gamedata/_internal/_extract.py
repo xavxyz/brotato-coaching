@@ -70,6 +70,7 @@ def _catalogues(catalog: Catalog) -> tuple[tuple[str, list], ...]:
         ("characters", catalog.characters),
         ("weapons", catalog.weapons),
         ("items", catalog.items),
+        ("enemies", catalog.enemies),
     )
 
 

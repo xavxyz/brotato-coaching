@@ -12,6 +12,9 @@ from pathlib import Path
 
 _SAVE_ROOT = Path.home() / "Library" / "Application Support" / "Brotato"
 _LIVE_RUN_STATE = "run_v3_0.json"
+# Where `extract` writes and `progress` reads: relative to the working
+# directory, because the extraction belongs to whatever workspace is in use.
+DEFAULT_DATA_DIRECTORY = Path("data")
 _DEFAULT_POLL_INTERVAL = 2.0
 
 # The repo root: src/brotato_coaching/_paths.py -> brotato_coaching -> src -> here.
@@ -44,6 +47,19 @@ def runs_directory() -> Path:
     if (override := os.environ.get("BROTATO_RUNS_DIR")):
         return Path(override).expanduser()
     return _REPO_ROOT / "runs"
+
+
+def data_directory() -> Path:
+    """Where `extract` left the game data, if the player has run it.
+
+    `BROTATO_DATA_DIR` wins; otherwise `data/` relative to where the command was
+    run, which is what `extract` writes to by default. Nothing here checks that
+    it exists: an absent directory is the ordinary case before a first extract,
+    and reading it is what discovers that.
+    """
+    if (override := os.environ.get("BROTATO_DATA_DIR")):
+        return Path(override).expanduser()
+    return DEFAULT_DATA_DIRECTORY
 
 
 def poll_interval() -> float:

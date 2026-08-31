@@ -27,6 +27,11 @@ from ._tres import Constructed, MalformedResource, Resource, parse_resource
 CHARACTER_SCRIPT = "character_data.gd"
 WEAPON_SCRIPT = "weapon_data.gd"
 ITEM_SCRIPT = "item_data.gd"
+# An enemy is described twice over: the codex entry the player unlocks carries
+# its name and whether it is elite, while `enemy_data.gd` covers the bosses and
+# elites the codex has no entry for. The two sets of ids do not overlap.
+ENEMY_ITEM_SCRIPT = "ItemEnemy.gd"
+ENEMY_SCRIPT = "enemy_data.gd"
 
 _MAX_EFFECT_DEPTH = 3
 
@@ -56,6 +61,7 @@ class Catalog:
     characters: list[dict[str, Any]]
     weapons: list[dict[str, Any]]
     items: list[dict[str, Any]]
+    enemies: list[dict[str, Any]]
 
 
 @dataclass(frozen=True)
@@ -182,6 +188,7 @@ def build_catalog(containers: dict[str, Container]) -> Catalog:
     characters: list[dict[str, Any]] = []
     weapons: list[dict[str, Any]] = []
     items: list[dict[str, Any]] = []
+    enemies: list[dict[str, Any]] = []
 
     for node in _Library(containers).nodes():
         identifier = node.identifier
@@ -193,11 +200,14 @@ def build_catalog(containers: dict[str, Container]) -> Catalog:
             weapons.append(_weapon(node))
         elif node.script == ITEM_SCRIPT and identifier.startswith("item_"):
             items.append(_item(node))
+        elif node.script in (ENEMY_ITEM_SCRIPT, ENEMY_SCRIPT):
+            enemies.append(_enemy(node))
 
     return Catalog(
         characters=sorted(characters, key=_by_id),
         weapons=sorted(weapons, key=_by_id),
         items=sorted(items, key=_by_id),
+        enemies=sorted(enemies, key=_by_id),
     )
 
 
@@ -244,6 +254,21 @@ def _item(node: _Node) -> dict[str, Any]:
         "tags": _json_ready(node.value("tags")),
         "sets": node.identifiers("sets"),
         "effects": node.effects(),
+    }
+
+
+def _enemy(node: _Node) -> dict[str, Any]:
+    """What kills the player, said plainly enough to read a death histogram by.
+
+    A boss's resource carries only its id and zone, so most fields here come
+    back `None` for one. That is the game's own asymmetry, not a gap.
+    """
+    return {
+        **_shared(node),
+        "is_boss": node.value("is_boss"),
+        "is_elite": node.value("is_elite"),
+        "zone_id": node.value("zone_id"),
+        "tier": node.value("tier"),
     }
 
 
