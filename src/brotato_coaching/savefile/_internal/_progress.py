@@ -70,9 +70,14 @@ class Progress:
     ``deaths`` and ``purchases`` are keyed by the game's integer ids. Both are
     ordered by count, commonest first, because "what kills me most" is the only
     question either is ever asked.
+
+    ``unlocked_characters`` is the same kind of id, as a plain list: the save
+    records which characters the player has access to, and it is the only place
+    that says so.
     """
 
     characters: tuple[CharacterProgress, ...]
+    unlocked_characters: tuple[int, ...]
     runs_started: int
     runs_won: int
     deaths: Mapping[int, int]
@@ -113,6 +118,9 @@ class Progress:
                 }
                 for character in self.characters
             ],
+            "unlocked_characters": sorted(
+                _name(identifier, name_for) for identifier in self.unlocked_characters
+            ),
             "deaths": _named(self.deaths, name_for),
             "purchases": _named(self.purchases, name_for),
         }
@@ -129,6 +137,9 @@ def read_progress() -> Progress:
     return Progress(
         characters=tuple(
             _character(entry) for entry in document.get("difficulties_unlocked") or []
+        ),
+        unlocked_characters=tuple(
+            int(identifier) for identifier in document.get("characters_unlocked") or []
         ),
         runs_started=int(totals.get("run_started", 0)),
         runs_won=int(totals.get("run_won", 0)),
@@ -157,6 +168,16 @@ def _zone(entry: Mapping[str, Any]) -> ZoneProgress:
     )
 
 
+def _unnamed(_identifier: int) -> None:
+    """What a caller with no names to lend supplies: no name, for anything."""
+    return None
+
+
+def _name(identifier: int, name_for: Callable[[int], str | None] | None) -> str:
+    """One id, as its name if that is knowable and as its digits if it is not."""
+    return (name_for or _unnamed)(identifier) or str(identifier)
+
+
 def _named(
     histogram: Mapping[int, int], name_for: Callable[[int], str | None] | None
 ) -> dict[str, int]:
@@ -165,10 +186,8 @@ def _named(
     Order is preserved, so the commonest cause stays first whether or not it
     could be named.
     """
-    resolve = name_for or (lambda _identifier: None)
     return {
-        resolve(identifier) or str(identifier): count
-        for identifier, count in histogram.items()
+        _name(identifier, name_for): count for identifier, count in histogram.items()
     }
 
 

@@ -31,9 +31,11 @@ alternatives were checked against the same save and neither matched: the
 
 Two properties of the id space, measured across both containers:
 
-- **945 resources carry a `my_id`**, and every one is unique.
-- **Their hashes collide nowhere.** A hash therefore names exactly one entity,
-  and a lookup table needs no tie-breaking by kind.
+- **945 resources carry a `my_id`.** Ids are near enough unique: one is reused,
+  `evil_mob`, which the DLC ships a second codex resource for. Two resources,
+  one name — which is exactly what a name book wants.
+- **No two different ids hash alike.** A hash therefore names exactly one
+  entity, and a lookup table needs no tie-breaking by kind.
 
 Resolving the committed real save against a full extraction of 1.1.12.0.beta-3
 names **15 of 15** death causes and **260 of 260** purchases. Nothing is left

@@ -29,7 +29,6 @@ from brotato_coaching.savefile import SaveUnavailable, read_progress
 from . import _paths
 from .runlog import AlreadyWatching, RunLog, UnknownRun
 
-DEFAULT_DATA_DIRECTORY = _paths.DEFAULT_DATA_DIRECTORY
 
 
 @dataclass(frozen=True)
@@ -163,7 +162,9 @@ _SUBCOMMANDS: dict[str, _Subcommand] = {
                 help="directory to write the JSON into",
                 options={
                     "metavar": "DIRECTORY",
-                    "default": str(DEFAULT_DATA_DIRECTORY),
+                    # The same directory `progress` resolves names from, so
+                    # extracting and reading cannot drift apart.
+                    "default": str(_paths.data_directory()),
                 },
             ),
         ),

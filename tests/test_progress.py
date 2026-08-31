@@ -28,6 +28,7 @@ CLEARED_CHARACTERS = {
     "character_one_arm",
     "character_diver",
 }
+UNLOCKED_CHARACTER_COUNT = 48
 DEATH_CAUSE_COUNT = 15
 DEATH_TOTAL = 24
 PURCHASED_ITEM_COUNT = 260
@@ -223,6 +224,36 @@ def test_purchases_are_named_across_every_catalogue(
     assert len(purchases) == PURCHASED_ITEM_COUNT
 
 
+def test_unlocked_characters_are_named(
+    cli: CliRunner, real_save_root: Path, tmp_path: Path
+) -> None:
+    """The save's one record of who the player may play, in names."""
+    data = write_game_data(
+        tmp_path / "data", characters=["character_mage", "character_crazy"]
+    )
+
+    report = cli(
+        "progress", application_support=real_save_root, data_directory=data
+    ).json()
+
+    unlocked = report["unlocked_characters"]
+    assert "character_mage" in unlocked
+    assert "character_crazy" in unlocked
+    assert len(unlocked) == UNLOCKED_CHARACTER_COUNT
+    assert unlocked == sorted(unlocked), "stable order, so two reports can be diffed"
+
+
+def test_unlocked_characters_stay_raw_without_extracted_data(
+    cli: CliRunner, real_save_root: Path
+) -> None:
+    unlocked = cli("progress", application_support=real_save_root).json()[
+        "unlocked_characters"
+    ]
+
+    assert len(unlocked) == UNLOCKED_CHARACTER_COUNT
+    assert all(identifier.isdigit() for identifier in unlocked)
+
+
 def test_a_data_directory_that_was_never_extracted_is_not_an_error(
     cli: CliRunner, real_save_root: Path, tmp_path: Path
 ) -> None:
@@ -365,6 +396,7 @@ def test_a_save_with_nothing_played_yet_reports_zeroes_rather_than_failing(
     assert report == {
         "lifetime": {"runs_started": 0, "runs_won": 0},
         "characters": [],
+        "unlocked_characters": [],
         "deaths": {},
         "purchases": {},
     }

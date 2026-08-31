@@ -19,9 +19,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-# Every catalogue `extract` writes. A hash may name any of them: the shop sells
-# items, weapons and characters alike, so a purchase can be any of the three.
-CATALOGUES = ("characters", "enemies", "items", "weapons")
+from ._catalog import CATALOGUE_NAMES
 
 _HASH_SEED = 5381
 _32_BITS = 0xFFFFFFFF
@@ -49,10 +47,8 @@ class NameBook:
         """The id behind one of the save's integers, or `None` if unknown."""
         return self.names.get(identifier)
 
-    def __bool__(self) -> bool:
-        return bool(self.names)
-
     def __len__(self) -> int:
+        """How many ids the book knows — and so, whether it knows any."""
         return len(self.names)
 
 
@@ -64,7 +60,9 @@ def read_names(directory: Path) -> NameBook:
     report is worth failing for the want of one.
     """
     names: dict[int, str] = {}
-    for catalogue in CATALOGUES:
+    # A hash may name any catalogue: the shop sells items, weapons and
+    # characters alike, so a purchase can be any of the three.
+    for catalogue in CATALOGUE_NAMES:
         for identifier in _identifiers(directory / f"{catalogue}.json", catalogue):
             names[godot_hash(identifier)] = identifier
     return NameBook(names=names)

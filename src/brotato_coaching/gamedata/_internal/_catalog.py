@@ -54,6 +54,11 @@ _PRESENTATION = frozenset(
 )
 
 
+# The catalogues, named once. Extraction writes one file per name and
+# resolution reads them back, so a fifth catalogue is one edit, not three.
+CATALOGUE_NAMES = ("characters", "weapons", "items", "enemies")
+
+
 @dataclass(frozen=True)
 class Catalog:
     """Every extracted entity, keyed by the file it will be written to."""
@@ -62,6 +67,10 @@ class Catalog:
     weapons: list[dict[str, Any]]
     items: list[dict[str, Any]]
     enemies: list[dict[str, Any]]
+
+    def by_name(self) -> tuple[tuple[str, list[dict[str, Any]]], ...]:
+        """Each catalogue, under the name its file is written as."""
+        return tuple((name, getattr(self, name)) for name in CATALOGUE_NAMES)
 
 
 @dataclass(frozen=True)
