@@ -431,4 +431,76 @@ th {
     font-size: 0.85em;
     word-break: break-all;
   }
+
+  /* A reference doc is not read down the page; it is scanned for the one row
+     that answers the question in hand. On paper that argues for density over
+     comfort, so it prints in two columns at a smaller size — the whole model on
+     a sheet you can put beside the keyboard, rather than four pages you flip
+     through. Lessons, which are read linearly, keep the single wide column. */
+  /* A named page, so the tighter margins apply to reference docs only and a
+     lesson keeps the roomier ones. */
+  @page dense {
+    margin: 12mm 11mm;
+  }
+
+  body.reference-doc {
+    page: dense;
+    font-size: 8.2pt;
+    line-height: 1.28;
+  }
+
+  body.reference-doc main {
+    columns: 2;
+    column-gap: 9mm;
+    column-rule: 1px solid var(--rule);
+  }
+
+  /* Tables are the bulk of a reference doc and must be free to flow across the
+     column break; only the short blocks are worth keeping whole. */
+  body.reference-doc .callout,
+  body.reference-doc pre,
+  body.reference-doc li {
+    break-inside: avoid;
+  }
+
+  body.reference-doc h2 {
+    margin: 0.9em 0 0.35em;
+    font-size: 1.15em;
+  }
+
+  body.reference-doc p,
+  body.reference-doc ul,
+  body.reference-doc ol,
+  body.reference-doc table,
+  body.reference-doc pre,
+  body.reference-doc .callout {
+    margin-bottom: 0.6em;
+  }
+
+  body.reference-doc li + li {
+    margin-top: 0.2em;
+  }
+
+  body.reference-doc .source-note {
+    margin-top: 0.15em;
+  }
+
+  body.reference-doc table {
+    font-size: 0.95em;
+  }
+
+  body.reference-doc th,
+  body.reference-doc td {
+    padding: 0.15em 0.4em;
+  }
+
+  body.reference-doc .page-header {
+    column-span: all;
+  }
+
+  body.reference-doc .page-footer {
+    column-span: all;
+    margin-top: 0.5em;
+    padding-top: 0.4em;
+  }
 }
