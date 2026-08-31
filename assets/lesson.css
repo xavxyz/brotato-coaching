@@ -6,7 +6,8 @@
  *
  * Contract for a page using this file:
  *   <html lang="en">                     — lesson.js sets data-theme on this element
- *   <body>
+ *   <body>                             — add class="reference-doc" on a reference doc, which
+ *                                        prints dense and two-up instead of as one wide column
  *     <header class="page-header">       — title, subtitle, patch stamp, theme toggle
  *     <main>                             — the content column
  *     <footer class="page-footer">       — sources, links back
@@ -446,7 +447,7 @@ th {
   body.reference-doc {
     page: dense;
     font-size: 8.2pt;
-    line-height: 1.28;
+    line-height: 1.26;
   }
 
   body.reference-doc main {

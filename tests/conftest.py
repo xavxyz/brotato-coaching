@@ -22,6 +22,8 @@ from typing import Any
 
 import pytest
 
+from brotato_coaching.gamedata import GameInstall, InstallNotFound, find_install
+
 FIXTURES = Path(__file__).parent / "fixtures"
 REAL_SAVE_ROOT = FIXTURES / "save"
 PLACEHOLDER_STEAM_ID = "00000000000000000"
@@ -220,3 +222,17 @@ class Workspace:
 @pytest.fixture
 def workspace(tmp_path: Path) -> Workspace:
     return Workspace(tmp_path)
+
+
+# Two suites assert against the game as installed on this machine: the extractor
+# itself, and the reference docs whose numbers come out of it. Both need the
+# install at import time, to decide whether to skip, so it is discovered once
+# here rather than in each of them.
+def installed_game() -> GameInstall | None:
+    try:
+        return find_install()
+    except InstallNotFound:
+        return None
+
+
+INSTALL = installed_game()

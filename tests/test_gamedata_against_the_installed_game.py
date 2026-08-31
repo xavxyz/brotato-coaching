@@ -13,22 +13,9 @@ from pathlib import Path
 
 import pytest
 
-from brotato_coaching.gamedata import (
-    GameInstall,
-    InstallNotFound,
-    extract,
-    find_install,
-)
+from conftest import INSTALL
 
-
-def installed_game() -> GameInstall | None:
-    try:
-        return find_install()
-    except InstallNotFound:
-        return None
-
-
-INSTALL = installed_game()
+from brotato_coaching.gamedata import extract
 
 pytestmark = pytest.mark.skipif(
     INSTALL is None, reason="Brotato is not installed on this machine"

@@ -72,6 +72,7 @@
       <p>
         The tooltip's <code>20 (80% Melee)</code> means: coefficient 0.8 on Melee Damage. The
         percentage is a literal multiplier on the stat, not on the damage.
+        <span class="source-note">STAT-S2.</span>
       </p>
 
       <p>
@@ -101,6 +102,7 @@
         Fifteen stats appear as scaling stats across the catalogue — not the eight the guides
         list. The third column is the largest coefficient any single weapon entry carries, which
         is where the outliers live.
+        <span class="source-note">Counts extracted; the notes column reads them — STAT-S1, STAT-S2, STAT-S15.</span>
       </p>
 
       <table>
@@ -224,6 +226,7 @@
         Ranged Damage is +300 to the first and +15 to the last. The low-coefficient weapons are the
         fast ones, and the comparison only closes once you multiply by fire rate — §5, where the
         arithmetic stops being trustworthy.
+        <span class="source-note">Numbers extracted; reading them, STAT-S2, STAT-S4.</span>
       </p>
 
       <h2>5 · Attack Speed, and why the number lies</h2>
@@ -313,8 +316,7 @@ melee : (cooldown / 60) + recoil_duration + atk_duration / 2 + back_duration
           intervals are averages.
           <span class="source-note">
             STAT-S8, STAT-S9, STAT-S10 — structure damage is <em>not</em> in the extracted
-            weapon catalogue, so these four numbers are the only ones on this page carried on a
-            source's word rather than the game's.
+            catalogue, so these ride on a source's word, as do §5's constants and §8's caps.
           </span>
         </li>
         <li>
@@ -461,8 +463,9 @@ melee : (cooldown / 60) + recoil_duration + atk_duration / 2 + back_duration
 
     <footer class="page-footer">
       <p>
-        Reference doc · concept-level by design · every numeric claim re-derived from
-        <code>brotato extract</code> on every test run.
+        Reference doc · concept-level by design · every <code>data-claim</code> number is
+        re-derived from <code>brotato extract</code> on each test run; §5's constants and §8's
+        caps are the sourced exceptions.
       </p>
       <ul>
         <li><a href="../RESOURCES.md">RESOURCES.md</a> — STAT-S* sources and STAT-Q* open questions</li>

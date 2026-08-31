@@ -32,24 +32,11 @@ from pathlib import Path
 
 import pytest
 
-from brotato_coaching.gamedata import (
-    GameInstall,
-    InstallNotFound,
-    extract,
-    find_install,
-)
+from conftest import INSTALL
+
+from brotato_coaching.gamedata import extract
 
 REFERENCE = Path(__file__).parent.parent / "reference"
-
-
-def installed_game() -> GameInstall | None:
-    try:
-        return find_install()
-    except InstallNotFound:
-        return None
-
-
-INSTALL = installed_game()
 
 
 def reference_docs() -> list[Path]:
@@ -57,33 +44,36 @@ def reference_docs() -> list[Path]:
 
 
 class Claims(HTMLParser):
-    """Every `data-claim` in a page, paired with the text that renders it."""
+    """Every `data-claim` on a page, paired with the text that renders it.
+
+    A claim element holds text and nothing else. Markup inside one is rejected
+    rather than parsed around: the whole point is that the number the suite
+    checks is the number on the paper, and nesting is how those two drift apart.
+    """
 
     def __init__(self) -> None:
         super().__init__()
-        # Each open claim carries how deep inside it the parser currently is, so
-        # that a claim wrapping `<code>…</code>` closes on its own end tag.
-        self._open: list[tuple[str, list[str], int]] = []
+        self._claim: str | None = None
+        self._text: list[str] = []
         self.found: list[tuple[str, str]] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        self._open = [(claim, text, depth + 1) for claim, text, depth in self._open]
+        if self._claim is not None:
+            raise AssertionError(
+                f"<{tag}> inside claim {self._claim!r}: a claim holds text only"
+            )
         claim = dict(attrs).get("data-claim")
         if claim is not None:
-            self._open.append((claim, [], 0))
+            self._claim, self._text = claim, []
 
     def handle_data(self, data: str) -> None:
-        for _, text, _ in self._open:
-            text.append(data)
+        if self._claim is not None:
+            self._text.append(data)
 
     def handle_endtag(self, tag: str) -> None:
-        still_open = []
-        for claim, text, depth in self._open:
-            if depth == 0:
-                self.found.append((claim, "".join(text).strip()))
-            else:
-                still_open.append((claim, text, depth - 1))
-        self._open = still_open
+        if self._claim is not None:
+            self.found.append((self._claim, "".join(self._text).strip()))
+            self._claim = None
 
 
 def claims_in(page: Path) -> list[tuple[str, str]]:
@@ -127,7 +117,15 @@ def expected(claim: str, game: dict) -> float | str:
     if isinstance(value, str):
         assert not transform, f"{claim}: a transform makes no sense on a string"
         return value
-    return {"": value, "pct": value * 100, "seconds": value / 60}[transform]
+    match transform:
+        case "":
+            return value
+        case "pct":
+            return value * 100
+        case "seconds":
+            return value / 60
+        case _:
+            raise AssertionError(f"unknown transform in {claim}: {transform!r}")
 
 
 def _resolve(parts: list[str], game: dict) -> float | str:
