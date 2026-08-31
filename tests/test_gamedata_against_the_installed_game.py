@@ -12,12 +12,14 @@ import json
 from pathlib import Path
 
 import pytest
+from conftest import PLACEHOLDER_STEAM_ID, REAL_SAVE_ROOT
 
 from brotato_coaching.gamedata import (
     GameInstall,
     InstallNotFound,
     extract,
     find_install,
+    read_names,
 )
 
 
@@ -111,5 +113,48 @@ def test_a_known_items_effects_are_extracted(extracted: Path) -> None:
 
 
 def test_every_catalogue_is_populated(extracted: Path) -> None:
-    for name in ("characters", "weapons", "items"):
+    for name in ("characters", "weapons", "items", "enemies"):
         assert len(catalogue(extracted, name)) > 30, name
+
+
+def test_every_id_in_the_real_save_resolves_to_a_name(extracted: Path) -> None:
+    """The hash, against the only data that can falsify it: a real save.
+
+    The committed save was written by the game, not by this repo. Every id in
+    it hashing back to an extracted entity is what identifies the algorithm.
+    """
+    save = json.loads(
+        (REAL_SAVE_ROOT / PLACEHOLDER_STEAM_ID / "save_v3_0.json").read_text()
+    )
+    names = read_names(extracted)
+
+    unresolved = [
+        identifier
+        for field in ("killed_by_enemies", "items_bought")
+        for identifier in save[field]
+        if names.name_for(int(identifier)) is None
+    ]
+    deaths = save["killed_by_enemies"]
+    commonest = max(deaths, key=lambda identifier: deaths[identifier])
+
+    assert unresolved == []
+    assert names.name_for(int(commonest)) == "lamprey"
+
+
+def test_no_two_extracted_ids_hash_to_the_same_integer(extracted: Path) -> None:
+    """What lets a hash name exactly one thing — asserted, not assumed.
+
+    A collision between two different ids would be silent: the book keeps one
+    and the other becomes unnameable. ADR-0003 rests on there being none.
+
+    Two *resources* sharing one id is a different matter and does happen — the
+    DLC ships a second `evil_mob` — but they hash alike because they are named
+    alike, so the name that comes back is right either way.
+    """
+    identifiers = {
+        entity["id"]
+        for name in ("characters", "weapons", "items", "enemies")
+        for entity in catalogue(extracted, name)
+    }
+
+    assert len(read_names(extracted)) == len(identifiers)

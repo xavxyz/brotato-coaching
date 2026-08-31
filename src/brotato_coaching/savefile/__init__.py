@@ -12,7 +12,8 @@ this answer rather than going looking a second time.
 Ids come out **raw**. `killed_by_enemies` and `items_bought` are keyed by integer
 hashes, and resolving those to names needs the installed game, which is another
 package's business. A save is readable without the game installed, and that stays
-true.
+true: `Progress.as_json_object` will borrow a function from id to name if a caller
+has one, and reports digits if it does not.
 """
 
 from ._internal._discovery import save_directory, save_file

@@ -19,6 +19,8 @@ from brotato_coaching.gamedata import (
     InstallNotFound,
     extract,
     find_install,
+    godot_hash,
+    read_names,
 )
 
 CHARACTER_TRES = """[gd_resource type="Resource" load_steps=4 format=2]
@@ -111,6 +113,28 @@ key = "stat_hp_regeneration"
 value = 3
 """
 
+ENEMY_TRES = """[gd_resource type="Resource" load_steps=2 format=2]
+
+[ext_resource path="res://entities/units/enemies/ItemEnemy.gd" type="Script" id=1]
+
+[resource]
+script = ExtResource( 1 )
+my_id = "mantis"
+name = "MANTIS_NAME"
+is_boss = false
+is_elite = true
+"""
+
+BOSS_TRES = """[gd_resource type="Resource" load_steps=2 format=2]
+
+[ext_resource path="res://entities/units/enemies/enemy_data.gd" type="Script" id=1]
+
+[resource]
+script = ExtResource( 1 )
+my_id = "boss_crab"
+zone_id = 0
+"""
+
 ABYSSAL_TERRORS_CHARACTER_TRES = """[gd_resource type="Resource" load_steps=2 format=2]
 
 [ext_resource path="res://items/global/character_data.gd" type="Script" id=1]
@@ -130,6 +154,8 @@ BASE_RESOURCES = {
     "res://items/all/gravy/gravy_data.tres": ITEM_TRES,
     "res://items/all/gravy/gravy_effect_1.tres": ITEM_EFFECT_TRES,
     "res://items/global/effect.gd": "# script bytes, never parsed\n",
+    "res://entities/units/enemies/mantis/mantis_item.tres": ENEMY_TRES,
+    "res://entities/units/enemies/boss/all/predator_data.tres": BOSS_TRES,
 }
 
 ABYSSAL_TERRORS_RESOURCES = {
@@ -183,17 +209,32 @@ def read_json(path: Path) -> dict:
     return json.loads(path.read_text())
 
 
-def test_extract_writes_the_three_catalogues(
+def test_extract_writes_every_catalogue(
     synthetic_install: GameInstall, tmp_path: Path
 ) -> None:
     extraction = extract(synthetic_install, tmp_path / "data")
 
     assert sorted(file.name for file in extraction.files) == [
         "characters.json",
+        "enemies.json",
         "items.json",
         "weapons.json",
     ]
     assert all(file.is_file() for file in extraction.files)
+
+
+def test_enemies_are_extracted_from_both_of_the_scripts_that_describe_them(
+    synthetic_install: GameInstall, tmp_path: Path
+) -> None:
+    """A codex entry names an enemy; an `enemy_data` resource names a boss."""
+    extraction = extract(synthetic_install, tmp_path / "data")
+
+    enemies = read_json(extraction.directory / "enemies.json")["enemies"]
+    by_id = {enemy["id"]: enemy for enemy in enemies}
+    assert set(by_id) == {"mantis", "boss_crab"}
+    assert by_id["mantis"]["name_key"] == "MANTIS_NAME"
+    assert by_id["mantis"]["is_elite"] is True
+    assert by_id["boss_crab"]["zone_id"] == 0
 
 
 def test_extract_creates_a_destination_that_does_not_exist(
@@ -489,3 +530,41 @@ def test_an_install_missing_a_container_names_only_the_zone_it_has(
     extraction = extract(install, tmp_path / "data")
 
     assert extraction.sources == ("base",)
+
+
+# --- names -----------------------------------------------------------------
+
+
+def test_the_hash_is_the_one_the_game_wrote_into_the_save() -> None:
+    """Fixed values, read off the committed real save. See ADR 0003."""
+    assert godot_hash("character_mage") == 904328779
+    assert godot_hash("lamprey") == 1737060255
+    assert godot_hash("") == 5381
+
+
+def test_a_name_book_resolves_ids_from_every_catalogue(
+    synthetic_install: GameInstall, tmp_path: Path
+) -> None:
+    extraction = extract(synthetic_install, tmp_path / "data")
+
+    names = read_names(extraction.directory)
+
+    for identifier in ("character_spud", "weapon_spoon_1", "item_gravy", "mantis"):
+        assert names.name_for(godot_hash(identifier)) == identifier
+
+
+def test_a_name_book_does_not_invent_a_name_for_an_id_it_has_never_seen(
+    synthetic_install: GameInstall, tmp_path: Path
+) -> None:
+    extraction = extract(synthetic_install, tmp_path / "data")
+
+    assert read_names(extraction.directory).name_for(1) is None
+
+
+def test_a_name_book_from_a_directory_that_was_never_extracted_is_empty(
+    tmp_path: Path,
+) -> None:
+    names = read_names(tmp_path / "never-extracted")
+
+    assert not names
+    assert names.name_for(godot_hash("character_spud")) is None

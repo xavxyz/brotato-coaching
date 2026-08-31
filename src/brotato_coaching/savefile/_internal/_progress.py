@@ -6,12 +6,13 @@ the file format does and not a thing that happened in a game.
 
 What does survive is the ids. `killed_by_enemies` and `items_bought` are keyed
 by integer hashes, and turning those into names needs the installed game — a
-different package, and a join that happens above both.
+different package, and a join that happens above both. What this file will take
+is a function from id to name, lent by whoever is doing that joining.
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -69,20 +70,33 @@ class Progress:
     ``deaths`` and ``purchases`` are keyed by the game's integer ids. Both are
     ordered by count, commonest first, because "what kills me most" is the only
     question either is ever asked.
+
+    ``unlocked_characters`` is the same kind of id, as a plain list: the save
+    records which characters the player has access to, and it is the only place
+    that says so.
     """
 
     characters: tuple[CharacterProgress, ...]
+    unlocked_characters: tuple[int, ...]
     runs_started: int
     runs_won: int
     deaths: Mapping[int, int]
     purchases: Mapping[int, int]
 
-    def as_json_object(self) -> dict[str, Any]:
+    def as_json_object(
+        self, name_for: Callable[[int], str | None] | None = None
+    ) -> dict[str, Any]:
         """The report, ready for `json.dumps`.
 
         The shape of the output lives here rather than in the CLI: it is what
         this package has to say, and a caller that reformats it is one that has
         started to know too much.
+
+        `name_for` is how a caller lends this package names it has no way to
+        know: hand it a function from id to name and the histogram keys come out
+        named, keep it and they come out as digits. Either way the answer is the
+        same shape, so a reader that cannot resolve one id is not a reader that
+        gets nothing.
         """
         return {
             "lifetime": {
@@ -104,8 +118,11 @@ class Progress:
                 }
                 for character in self.characters
             ],
-            "deaths": {str(key): count for key, count in self.deaths.items()},
-            "purchases": {str(key): count for key, count in self.purchases.items()},
+            "unlocked_characters": sorted(
+                _name(identifier, name_for) for identifier in self.unlocked_characters
+            ),
+            "deaths": _named(self.deaths, name_for),
+            "purchases": _named(self.purchases, name_for),
         }
 
 
@@ -123,6 +140,9 @@ def read_progress(path: Path) -> Progress:
     return Progress(
         characters=tuple(
             _character(entry) for entry in document.get("difficulties_unlocked") or []
+        ),
+        unlocked_characters=tuple(
+            int(identifier) for identifier in document.get("characters_unlocked") or []
         ),
         runs_started=int(totals.get("run_started", 0)),
         runs_won=int(totals.get("run_won", 0)),
@@ -149,6 +169,29 @@ def _zone(entry: Mapping[str, Any]) -> ZoneProgress:
         max_danger_beaten=None if danger == _NEVER else danger,
         max_wave_reached=None if danger == _NEVER or wave == _NEVER else wave,
     )
+
+
+def _unnamed(_identifier: int) -> None:
+    """What a caller with no names to lend supplies: no name, for anything."""
+    return None
+
+
+def _name(identifier: int, name_for: Callable[[int], str | None] | None) -> str:
+    """One id, as its name if that is knowable and as its digits if it is not."""
+    return (name_for or _unnamed)(identifier) or str(identifier)
+
+
+def _named(
+    histogram: Mapping[int, int], name_for: Callable[[int], str | None] | None
+) -> dict[str, int]:
+    """A histogram keyed by name where one is known, and by digits where it is not.
+
+    Order is preserved, so the commonest cause stays first whether or not it
+    could be named.
+    """
+    return {
+        _name(identifier, name_for): count for identifier, count in histogram.items()
+    }
 
 
 def _histogram(counts: Mapping[str, int] | None) -> Mapping[int, int]:
