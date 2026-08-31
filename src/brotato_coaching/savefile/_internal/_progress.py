@@ -14,9 +14,9 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
-from ._discovery import find_save_file
 from ._document import read_document
 
 # The save writes "never beaten" as -1 rather than omitting the record.
@@ -126,13 +126,16 @@ class Progress:
         }
 
 
-def read_progress() -> Progress:
-    """Read the player's save and roll it up.
+def read_progress(path: Path) -> Progress:
+    """Roll up the save at `path`.
 
-    Raises `SaveUnavailable` when there is no save to read, with a message
-    written for the player.
+    Handed the file rather than going to find it: `save_file()` answers where,
+    this answers what, and the two compose at the seam above.
+
+    Raises `SaveUnavailable` when the file is not a readable save, with a
+    message written for the player.
     """
-    document = read_document(find_save_file())
+    document = read_document(path)
     totals = document.get("data") or {}
     return Progress(
         characters=tuple(

@@ -312,8 +312,9 @@ def test_the_offline_save_does_not_shadow_the_steam_save(
 ) -> None:
     """Brotato writes an empty `user/` save beside the Steam one.
 
-    Every real install has both, so globbing that stopped at "two saves, which
-    one?" would never once find the save it was written to find.
+    Every real install has both, so discovery that stopped at "two saves, which
+    one?" would never once find the save it was written to find. `user` is not a
+    Steam ID, so it is not a candidate at all.
     """
     _write_save(real_save_root / "user", _empty_save_document())
     report = cli("progress", application_support=real_save_root).json()
@@ -330,12 +331,21 @@ def test_several_steam_saves_and_no_steam_id_asks_for_one(
     assert "Traceback" not in result.stderr
 
 
-def test_only_an_offline_save_is_still_worth_reading(
+def test_an_offline_save_on_its_own_is_not_found(
     cli: CliRunner, save_root: Path
 ) -> None:
+    """This tool reads Steam saves. A `user/` save is not one, even when alone.
+
+    Supporting it would mean discovery could no longer say what a save directory
+    looks like, and the tool depends on Steam throughout.
+    """
     _write_save(save_root / "user", _empty_save_document())
-    report = cli("progress", application_support=save_root).json()
-    assert report["lifetime"] == {"runs_started": 0, "runs_won": 0}
+
+    result = cli("progress", application_support=save_root)
+
+    assert result.exit_code != 0
+    assert "Traceback" not in result.stderr
+    assert "save directory" in result.stderr
 
 
 # --- when there is nothing to read -----------------------------------------
