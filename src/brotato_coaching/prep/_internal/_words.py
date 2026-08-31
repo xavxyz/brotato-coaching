@@ -4,7 +4,7 @@ Two jobs need the same trick. Withholding a character's identity means finding
 `mage` inside `res://items/characters/mage/mage_data.tres` while *not* finding
 it inside `stat_melee_damage` — a substring search fails that on the first try,
 and fails it silently. Scoring a prediction means reading "Elemental Damage" and
-`stat_elemental_damage` as the same answer.
+`stat_elemental_damage` as the same name.
 
 Both fall out of the same reading: an id is a sequence of words, and everything
 between them is punctuation.
@@ -23,7 +23,7 @@ _NOT_A_WORD_CHARACTER = r"[a-zA-Z0-9]"
 # `mage_data.tres` reads as `….tres` rather than as a shape to count letters in.
 ELLIPSIS = "…"
 
-# Prefixes the game puts on its own vocabulary. A player writing an answer down
+# Prefixes the game puts on its own vocabulary. A player writing a prediction down
 # will not type them, and should not have to.
 _PREFIXES = frozenset({"stat", "set", "character", "weapon", "item"})
 
@@ -34,10 +34,12 @@ def words(text: str) -> tuple[str, ...]:
 
 
 def key(text: str) -> str:
-    """One answer reduced to what it says, so two spellings of it compare equal.
+    """One name reduced to what it says, so two spellings of it compare equal.
 
-    The game's own prefix is dropped, because `stat_armor`, `Armor` and `armor`
-    are one answer and only one of them is a thing a player types.
+    Applied to both sides of a comparison — what the player predicted and what
+    the game declares. The game's own prefix is dropped, because `stat_armor`,
+    `Armor` and `armor` are one name and only one of them is a thing a player
+    types.
     """
     said = words(text)
     if said and said[0] in _PREFIXES:

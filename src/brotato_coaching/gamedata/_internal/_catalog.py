@@ -69,9 +69,6 @@ class Catalog:
     catalogue that has just been built — the version belongs to the install, and
     is stamped on as it is written — and carries the stamp back when one is read
     off disk, so nothing downstream has to quote a number without its patch.
-
-    An empty catalogue is falsy, exactly as an empty `NameBook` is, so a caller
-    can tell "nothing extracted yet" from "extracted, but not this id".
     """
 
     characters: list[dict[str, Any]]
@@ -83,10 +80,6 @@ class Catalog:
     def by_name(self) -> tuple[tuple[str, list[dict[str, Any]]], ...]:
         """Each catalogue, under the name its file is written as."""
         return tuple((name, getattr(self, name)) for name in CATALOGUE_NAMES)
-
-    def __len__(self) -> int:
-        """How many entities the catalogue holds — and so, whether it holds any."""
-        return sum(len(entities) for _, entities in self.by_name())
 
 
 def read_catalog(directory: Path) -> Catalog:

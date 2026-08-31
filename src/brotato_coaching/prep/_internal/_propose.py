@@ -8,13 +8,13 @@ until that character has been played, rather than shuffling until something
 comfortable comes up.
 
 "Reasoning the player has never had to do" is read off the stats the game says a
-character wants. Those stats are what `CONTEXT.md` calls an archetype seen from
-the data's side — the characters that want Elemental Damage reward the same
-reading, whatever else differs between them.
+character wants. Those stats are an **archetype** seen from the data's side —
+`CONTEXT.md` defines one as the characters that reward the same reasoning, and
+the characters that want Elemental Damage do, whatever else differs between them.
 
 The reasoning this module hands back is **counts only, never stat names**. It is
 printed beside the card, before any prediction is committed, and a sentence
-naming the family would answer two of the four questions outright.
+naming the archetype would answer two of the four questions outright.
 """
 
 from __future__ import annotations
@@ -42,17 +42,28 @@ def propose(
     character is a candidate, because refusing to propose would be worse than
     proposing one the player has yet to earn.
     """
-    reasoned = {stat for identifier in cleared for stat in _wants(characters, identifier)}
+    by_id = {str(character.get("id")): character for character in characters}
+    reasoned = {
+        stat
+        for identifier in cleared
+        for stat in _stats(by_id.get(identifier, {}))
+    }
     candidates = [
         character
-        for character in characters
-        if _wants_anything(character)
-        and str(character.get("id")) not in cleared
-        and (not unlocked or str(character.get("id")) in unlocked)
+        for identifier, character in by_id.items()
+        if _stats(character)
+        and identifier not in cleared
+        and (not unlocked or identifier in unlocked)
     ]
     if not candidates:
         return None
-    chosen = min(candidates, key=lambda character: (-_novelty(character, reasoned), str(character.get("id"))))
+    chosen = min(
+        candidates,
+        key=lambda character: (
+            -_novelty(character, reasoned),
+            str(character.get("id")),
+        ),
+    )
     return chosen, {
         "reason": (
             "never cleared, and it rewards reasoning you have not had to do"
@@ -61,37 +72,25 @@ def propose(
         ),
         "candidates": len(candidates),
         "unlocked_known": len(unlocked),
-        "families_reasoned_about": len(reasoned),
-        "families_new_here": _novelty(chosen, reasoned),
+        "archetypes_reasoned_about": len(reasoned),
+        "archetypes_new_here": _novelty(chosen, reasoned),
     }
 
 
-def _wants(
-    characters: Sequence[Mapping[str, Any]], identifier: str
-) -> frozenset[str]:
-    for character in characters:
-        if str(character.get("id")) == identifier:
-            return _stats(character)
-    return frozenset()
-
-
 def _stats(character: Mapping[str, Any]) -> frozenset[str]:
+    """The stats the game says this character wants — its archetype, in data.
+
+    Empty means the game names none, and a character the game names none for
+    would score `unscorable` on two of the four dimensions. Such a character is
+    never *proposed*; naming one explicitly still works, because the player may
+    want to reason about it anyway.
+    """
     wanted = character.get("wanted_tags")
     if not isinstance(wanted, list):
         return frozenset()
     return frozenset(key(str(stat)) for stat in wanted if str(stat))
 
 
-def _wants_anything(character: Mapping[str, Any]) -> bool:
-    """Whether a drill on this character could be scored at all.
-
-    A character the game names no wanted stat for would score `unscorable` on
-    two of the four dimensions. Naming one explicitly still works — the player
-    may want to reason about it anyway — but it is never *proposed*.
-    """
-    return bool(_stats(character))
-
-
 def _novelty(character: Mapping[str, Any], reasoned: Collection[str]) -> int:
-    """How many of this character's wanted stats the player has never met."""
+    """How much of this character's archetype the player has never met."""
     return len(_stats(character) - frozenset(reasoned))

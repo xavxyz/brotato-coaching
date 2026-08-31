@@ -27,7 +27,6 @@ from brotato_coaching.gamedata import (
 )
 from brotato_coaching.prep import PrepDrills, PrepRefused
 from brotato_coaching.savefile import (
-    Progress,
     SaveDirectoryUnavailable,
     SaveUnavailable,
     read_progress,
@@ -204,13 +203,15 @@ def _prep(arguments: argparse.Namespace) -> int:
     """
     drills = PrepDrills(_settings.drills_directory())
     try:
-        if arguments.history:
+        mode = _mode(arguments)
+        _nothing_ignored(arguments, mode)
+        if mode == "history":
             return _emit(drills.history())
-        if arguments.commit:
+        if mode == "commit":
             return _emit(drills.commit(arguments.commit, **_predictions(arguments)))
-        if arguments.reveal:
+        if mode == "reveal":
             return _emit(drills.reveal(arguments.reveal))
-        if arguments.settle:
+        if mode == "settle":
             if arguments.actual_wave is None:
                 raise PrepRefused(
                     "--settle needs --actual-wave: the wave the run actually broke at"
@@ -232,8 +233,46 @@ def _prep(arguments: argparse.Namespace) -> int:
         return 1
 
 
+# Which values each mode of `prep` reads. Anything supplied that its mode does
+# not read is refused rather than dropped: `prep character_mage --history`
+# quietly printing history and forgetting the character is exactly the sort of
+# confidently wrong answer this command exists not to give.
+_MODE_VALUES = {
+    "open": ("character",),
+    "commit": ("primary_stat", "secondary_stat", "weapon_class", "weakest_wave"),
+    "reveal": (),
+    "settle": ("actual_wave",),
+    "history": (),
+}
+
+
+def _mode(arguments: argparse.Namespace) -> str:
+    """Which of `prep`'s modes was asked for. No flag means opening a drill."""
+    return next(
+        (name for name in _MODE_VALUES if name != "open" and getattr(arguments, name)),
+        "open",
+    )
+
+
+def _nothing_ignored(arguments: argparse.Namespace, mode: str) -> None:
+    supplied = {
+        name
+        for names in _MODE_VALUES.values()
+        for name in names
+        if getattr(arguments, name) is not None
+    }
+    ignored = sorted(supplied - set(_MODE_VALUES[mode]))
+    if ignored:
+        named = ", ".join(
+            "a character" if name == "character" else f"--{name.replace('_', '-')}"
+            for name in ignored
+        )
+        doing = "opening a drill" if mode == "open" else f"--{mode}"
+        raise PrepRefused(f"{doing} does not read {named}, so it will not ignore it")
+
+
 def _predictions(arguments: argparse.Namespace) -> dict[str, Any]:
-    """The four answers, or a refusal naming the ones that are missing.
+    """The four predictions, or a refusal naming the ones that are missing.
 
     All four or none: a drill that let three through would be a drill the player
     could hedge on by leaving the one they are least sure of until after the
@@ -275,13 +314,7 @@ def _player() -> dict[str, Any]:
             )
             if name
         },
-        "cleared": _cleared(progress),
-    }
-
-
-def _cleared(progress: Progress) -> set[str]:
-    return {
-        character.character_id for character in progress.characters if character.cleared
+        "cleared": progress.cleared_characters,
     }
 
 

@@ -2,7 +2,7 @@
 
 Everything a drill promises is a thing an outside observer can check on the JSON
 the CLI prints: that the card does not name the character, that a reveal before
-the four answers is refused, that each answer is scored on its own, and that the
+the four predictions is refused, that each is scored on its own, and that the
 hit rate adds up across drills. None of these tests know how any of it is done.
 
 The catalogue below is hand-written but its **ids are the game's**, because the
@@ -456,6 +456,38 @@ def test_history_counts_a_drill_that_is_still_open_without_naming_it(
     assert "mage" not in words(history)
 
 
+def test_a_drill_settled_but_never_revealed_is_not_counted_as_revealed(
+    cli: CliRunner, game_data: Path
+) -> None:
+    drill_id = open_drill(cli, game_data, MAGE)["drill_id"]
+    committed(cli, drill_id)
+    cli("prep", "--settle", drill_id, "--actual-wave", "13")
+
+    history = cli("prep", "--history").json()
+
+    assert history["settled"] == 1
+    assert history["revealed"] == 0
+
+
+@pytest.mark.parametrize(
+    ("arguments", "ignored"),
+    [
+        (("--history",), "a character"),
+        (("--reveal", "any-drill", "--primary-stat", "armor"), "--primary-stat"),
+        (("--settle", "any-drill", "--actual-wave", "9", "--weapon-class", "gun"),
+         "--weapon-class"),
+    ],
+)
+def test_an_argument_a_mode_does_not_read_is_refused_not_dropped(
+    cli: CliRunner, game_data: Path, arguments: tuple[str, ...], ignored: str
+) -> None:
+    """Silently discarding the character would be a confidently wrong answer."""
+    result = cli("prep", MAGE, *arguments, data_directory=game_data)
+
+    assert result.exit_code != 0
+    assert ignored in result.stderr
+
+
 def test_history_is_empty_before_the_first_drill(cli: CliRunner) -> None:
     history = cli("prep", "--history").json()
 
@@ -521,7 +553,7 @@ def test_a_proposal_says_why_without_saying_what(
 
     assert opened["proposal"]["reason"]
     assert opened["proposal"]["candidates"] == 1
-    assert opened["proposal"]["families_reasoned_about"] == 1
+    assert opened["proposal"]["archetypes_reasoned_about"] == 1
     assert not words(opened["proposal"]) & {"ranged", "range", "elemental", "dodge"}
 
 

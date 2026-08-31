@@ -19,15 +19,22 @@ id, the translation key, the resource path, and the character's own name struck 
 any weapon or effect that carries it. The stats the game says the character wants are
 never on the card either, because they are the answer to two of the four questions.
 
-So you cannot leak the identity by accident. You **can** leak it by working it out from
-the modifiers and saying so, or by hinting. Do not. If you recognise the character, say
-nothing about it until step 5.
+So you cannot leak the identity by accident. You **can** leak it in three ways, and all
+three are on you:
+
+1. **Reading the drill file.** `drills/<drill-id>.json` holds the truth as well as the
+   card, because a reveal has to work after a patch. **Never open it.** `--reveal` is the
+   only way to see what is in it, and it is refused until the four predictions are in.
+   The same goes for `data/characters.json`, which would let you look the character up.
+2. **Deducing it and saying so.** If you recognise the character from its modifiers, say
+   nothing about it until step 5.
+3. **Hinting.** See step 3.
 
 ## Before you start
 
-Every step shells out to the CLI. Never read `data/`, `runs/` or the save file yourself,
-and never compute a stat or a set bonus by hand — the numbers come from the installed
-game or they are not used.
+Every step shells out to the CLI. Never read `data/`, `drills/`, `runs/` or the save file
+yourself, and never compute a stat or a set bonus by hand — the numbers come from the
+installed game or they are not used.
 
 ```sh
 uv run brotato prep --history      # is there anything set up at all?
@@ -44,7 +51,7 @@ uv run brotato prep character_mage         # or drill a named one
 ```
 
 With no argument it reads the save and proposes a character the player has never cleared,
-from a family of characters whose reasoning they have never had to do. The `proposal`
+from an archetype whose reasoning they have never had to do. The `proposal`
 block gives counts and no stat names, on purpose; you may repeat it verbatim.
 
 Note the `drill_id`. Every later step needs it.
@@ -60,7 +67,7 @@ Show the player, in your own words and in a readable table rather than as JSON:
 
 Then ask for the four predictions, in one message, and stop.
 
-## Step 3 — take four committed answers
+## Step 3 — take four committed predictions
 
 Ask all four at once. Do not accept the drill moving on until you have all four.
 
@@ -72,13 +79,14 @@ Ask all four at once. Do not accept the drill moving on until you have all four.
    is delivered, not what class it is. See `docs/research/weapon-classes.md`.
 4. **Weakest wave** — the wave number they expect this build to be at its weakest.
 
-**A hedge is not an answer.** "Elemental damage, or maybe attack speed" is two answers and
+**A hedge is not a prediction.** "Elemental damage, or maybe attack speed" is two
+predictions and
 teaches nothing about either. If they hedge, say so plainly and ask for the one they would
-put money on. Same for "I don't know": ask for their best guess, because a wrong committed
-guess is scored and a refusal is not.
+put money on. Same for "I don't know": ask for the one they would commit to anyway,
+because a wrong committed prediction is scored and a refusal is not.
 
 **Do not help.** No hints, no narrowing, no "well, look at the cooldown". If they ask what
-you would answer, tell them that answering for them is the one thing this drill cannot
+you would predict, tell them that predicting for them is the one thing this drill cannot
 survive, and ask again.
 
 When you have all four:
@@ -104,7 +112,7 @@ uv run brotato prep --reveal <drill-id>
 Now name the character and report each verdict on its own:
 
 - `hit` / `miss` — scored against what the game itself declares.
-- `unscorable` — the game names no answer for this dimension, so the player was not wrong.
+- `unscorable` — the game declares nothing for this dimension, so the player was not wrong.
   Say so; do not let it read as a miss.
 - `pending` — the wave prediction, which no game file can settle. It waits for a run.
 

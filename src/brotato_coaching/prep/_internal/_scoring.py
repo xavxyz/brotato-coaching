@@ -24,7 +24,7 @@ DIMENSIONS = ("primary_stat", "secondary_stat", "weapon_class", "weakest_wave")
 
 HIT = "hit"
 MISS = "miss"
-# The game declares no answer, so neither a hit nor a miss would mean anything.
+# The game declares nothing here, so neither a hit nor a miss would mean anything.
 # An unscorable dimension stays out of the hit rate rather than counting as a
 # miss, which would quietly punish the player for the data being thin.
 UNSCORABLE = "unscorable"
@@ -37,7 +37,7 @@ WAVE_TOLERANCE = 1
 
 # The game declares which stats a character wants as a set, not as a ranking, so
 # a player who names the two in the other order has not been wrong about
-# anything the data can see. Both answers score against the whole set; only
+# anything the data can see. Both predictions score against the whole set; only
 # naming the *same* stat twice fails to be a second prediction.
 _ORDER_NOTE = (
     "the game declares wanted stats as a set, not a ranking, so either order scores"
@@ -86,7 +86,7 @@ def score(
 
 def _against(
     predicted: Any,
-    answered: str | None,
+    said: str | None,
     accepted: Sequence[str],
     *,
     missing: str,
@@ -96,7 +96,7 @@ def _against(
         return {"predicted": predicted, "verdict": UNSCORABLE, "why": missing}
     return {
         "predicted": predicted,
-        "verdict": HIT if answered in accepted else MISS,
+        "verdict": HIT if said in accepted else MISS,
         "accepted": list(accepted),
         "why": note,
     }

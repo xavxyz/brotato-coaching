@@ -120,13 +120,13 @@ class PrepDrills:
         weapon_class: str,
         weakest_wave: int,
     ) -> dict[str, Any]:
-        """Record the four answers. Refused if this drill already has some."""
+        """Record the four predictions. Refused if this drill already has some."""
         drill = self._load(drill_id)
         if drill["predictions"] is not None:
             raise PrepRefused(
                 f"{drill_id} was committed at {drill['committed_at']}; a committed "
                 "prediction is not revisable, which is the only thing that makes it "
-                "a prediction. Open a new drill to answer again"
+                "a prediction. Open a new drill to predict again"
             )
         drill["predictions"] = {
             "primary_stat": primary_stat,
@@ -149,7 +149,7 @@ class PrepDrills:
         if drill["predictions"] is None:
             raise PrepRefused(
                 f"{drill_id} has no committed predictions, and the reveal is what "
-                "they are for; commit four answers first"
+                "they are for; commit four predictions first"
             )
         drill["verdicts"] = score(
             drill["truth"], drill["predictions"], drill.get("actual_wave")
@@ -176,7 +176,7 @@ class PrepDrills:
         if drill["predictions"] is None:
             raise PrepRefused(
                 f"{drill_id} has no committed predictions to settle; commit four "
-                "answers first"
+                "predictions first"
             )
         drill["actual_wave"] = actual_wave
         drill["settled_at"] = now_stamp()
@@ -201,7 +201,7 @@ class PrepDrills:
         return {
             "drills": len(drills),
             "committed": sum(1 for drill in drills if drill.get("predictions")),
-            "revealed": len(scored),
+            "revealed": sum(1 for drill in drills if drill.get("revealed_at")),
             "settled": sum(1 for drill in drills if drill.get("actual_wave") is not None),
             "hit_rate": tally(scored),
             "taken": [_summary(drill) for drill in drills if drill.get("verdicts")],

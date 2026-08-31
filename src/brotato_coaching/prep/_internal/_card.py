@@ -4,7 +4,7 @@ A card and a truth are built together, from the same character record, and they
 are built *once* — at the moment the drill opens. Everything the player is
 allowed to see goes into the card; everything that would answer a prediction
 goes into the truth, which is written to the drill file and not printed until
-the four answers are in.
+the four predictions are in.
 
 The withholding is mechanical rather than careful. The card is assembled from an
 allowed list of fields and then swept for the character's own name, so a field
@@ -25,7 +25,7 @@ WITHHELD = "withheld"
 # A card is assembled field by field, and what is not assembled in is not shown.
 # `id`, `name_key` and `resource` name the character; `wanted_tags` *is* the
 # answer to both stat predictions; `tags` and `banned_items` describe the
-# character in the same vocabulary those answers are written in. None of them
+# character in the same vocabulary those predictions are written in. None of them
 # appear below, and the sweep at the end is the second line of defence.
 
 # Fields of an effect that carry mechanics rather than presentation or
@@ -38,7 +38,7 @@ _MECHANICAL = ("kind", "key", "value", "stat_displayed", "stats_modified")
 _WEAPON_SHOWN = ("id", "name_key", "weapon_id", "class", "sets", "tier", "stats")
 
 
-def character_name(character_id: str) -> str:
+def word_to_strike(character_id: str) -> str:
     """`character_mage` -> `mage`: the word a card must not contain."""
     return character_id.removeprefix("character_")
 
@@ -66,7 +66,7 @@ def build(
             "starting_weapon": _weapon(starting_weapon),
             "starting_pool": _pool(starting),
         },
-        character_name(str(character.get("id", ""))),
+        word_to_strike(str(character.get("id", ""))),
     )
     truth = {
         "character_id": character.get("id"),
