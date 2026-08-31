@@ -1,0 +1,131 @@
+{
+  "character": "character_hiker",
+  "danger": 5,
+  "ended_at": "2026-08-31T12:02:50.548Z",
+  "last_captured_at": "2026-08-31T12:02:10.674Z",
+  "run_id": "20260831T115414Z-character_hiker",
+  "snapshots": [
+    {
+      "captured_at": "2026-08-31T11:54:14.288Z",
+      "digest": "b9cdbc2c732c305e57ba0e2358890c8548f4606cae1101c0447d69b0e4b16e6f",
+      "file": "0001.json",
+      "wave": 1
+    },
+    {
+      "captured_at": "2026-08-31T11:54:37.347Z",
+      "digest": "46ef3c0573d54558ba1a622408287982393033f8497fbc1c39cd828c1cb2bfa1",
+      "file": "0002.json",
+      "wave": 1
+    },
+    {
+      "captured_at": "2026-08-31T11:55:02.502Z",
+      "digest": "3466eaf9312563e6abb41b921626c28cef4ecc854c06420c98451ae899b2daa8",
+      "file": "0003.json",
+      "wave": 1
+    },
+    {
+      "captured_at": "2026-08-31T11:55:17.191Z",
+      "digest": "98e521c6f714d8db8e0bc026df4a24004e848950ad67809e929a4d6876d47293",
+      "file": "0004.json",
+      "wave": 2
+    },
+    {
+      "captured_at": "2026-08-31T11:55:29.762Z",
+      "digest": "0169ae9a32037467942cd9c89d240914a0e43eb893e71c8a3c520640e3464bba",
+      "file": "0005.json",
+      "wave": 2
+    },
+    {
+      "captured_at": "2026-08-31T11:56:15.957Z",
+      "digest": "32d5931e4e49dbe72fcb2c40f3aa793bf4711a6278ac05c713b93a75e207e832",
+      "file": "0006.json",
+      "wave": 2
+    },
+    {
+      "captured_at": "2026-08-31T11:56:28.549Z",
+      "digest": "05b4b8b2aa15ba39c808bcf46fee867c07c6710dd1a384d42d3e738853dfb309",
+      "file": "0007.json",
+      "wave": 3
+    },
+    {
+      "captured_at": "2026-08-31T11:56:39.043Z",
+      "digest": "d0bb9f690a55fa4e89f8c64f818e94bc03eec8267a6ac4814a17c30e8508e331",
+      "file": "0008.json",
+      "wave": 3
+    },
+    {
+      "captured_at": "2026-08-31T11:57:14.706Z",
+      "digest": "17dc53790db3f621e5624ed50fb25b901db24cebe75e2ba7e1f5260c7f89b49b",
+      "file": "0009.json",
+      "wave": 3
+    },
+    {
+      "captured_at": "2026-08-31T11:57:23.099Z",
+      "digest": "dd25040f85e6aa574bdbc2fbd2b11ef051357e78bdc727e1f15879e5a1836317",
+      "file": "0010.json",
+      "wave": 4
+    },
+    {
+      "captured_at": "2026-08-31T11:58:05.091Z",
+      "digest": "4ff4cb202ea05619f32dcdab88955c1d3715c73011d829624845c2957f7bae78",
+      "file": "0011.json",
+      "wave": 4
+    },
+    {
+      "captured_at": "2026-08-31T11:58:45.023Z",
+      "digest": "67ae3832a5a11efa5dc39eeeddb8235d0900dca699a6ed01e33f9423e5ac528a",
+      "file": "0012.json",
+      "wave": 4
+    },
+    {
+      "captured_at": "2026-08-31T11:58:55.508Z",
+      "digest": "77f163c943f58dea310ec4bb35c8b63bedfadf5c770829f5df27bff136db3b60",
+      "file": "0013.json",
+      "wave": 5
+    },
+    {
+      "captured_at": "2026-08-31T11:59:12.320Z",
+      "digest": "d52eaec3863a5749b3ac258bae87c3aeefc48a42d1de1f116e90ba099563abf1",
+      "file": "0014.json",
+      "wave": 5
+    },
+    {
+      "captured_at": "2026-08-31T11:59:58.449Z",
+      "digest": "3b3b661e0a70381b3c7e3f5b3e7a79ebdb6077c5d89ce206c9b4f55ad05dd912",
+      "file": "0015.json",
+      "wave": 5
+    },
+    {
+      "captured_at": "2026-08-31T12:00:13.145Z",
+      "digest": "ba31a68505702979b0dfcb4360c306ebd02d9962994f20af9bdb107a4823fabe",
+      "file": "0016.json",
+      "wave": 6
+    },
+    {
+      "captured_at": "2026-08-31T12:00:44.620Z",
+      "digest": "a532a9cbd0e22a4c1f96def55240dfb19f998bd18b55cd31902b179b6448754a",
+      "file": "0017.json",
+      "wave": 6
+    },
+    {
+      "captured_at": "2026-08-31T12:01:34.998Z",
+      "digest": "25d0af98b776cbec0bf9691a4696981b63f424505d678efed59ef1417288ea03",
+      "file": "0018.json",
+      "wave": 6
+    },
+    {
+      "captured_at": "2026-08-31T12:01:47.601Z",
+      "digest": "f70b84b1ed9dffa5bbe44ead52ad724dc6293697f5cbf00258b6f4b4d98c7fe8",
+      "file": "0019.json",
+      "wave": 7
+    },
+    {
+      "captured_at": "2026-08-31T12:02:10.674Z",
+      "digest": "070278c3f429819d0aed6ee0f4825bb201d4275bfa2cb04bf2ab26d20768ebe6",
+      "file": "0020.json",
+      "wave": 7
+    }
+  ],
+  "started_at": "2026-08-31T11:54:14.287Z",
+  "zone": 0
+}
