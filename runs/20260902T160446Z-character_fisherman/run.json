@@ -1,0 +1,347 @@
+{
+  "character": "character_fisherman",
+  "danger": 3,
+  "ended_at": "2026-09-02T16:30:24.912Z",
+  "last_captured_at": "2026-09-02T16:30:14.431Z",
+  "run_id": "20260902T160446Z-character_fisherman",
+  "snapshots": [
+    {
+      "captured_at": "2026-09-02T16:04:47.992Z",
+      "digest": "79323cb5eaf4a11c07dd35b8660d1643c685bd511eda9cb22a4c945264b400c9",
+      "file": "0001.json",
+      "waves_cleared": 1
+    },
+    {
+      "captured_at": "2026-09-02T16:04:56.829Z",
+      "digest": "4867120db01b74f252f9fff9657c566fa68c097f26d08c4065c0d55b0153eff8",
+      "file": "0002.json",
+      "waves_cleared": 1
+    },
+    {
+      "captured_at": "2026-09-02T16:05:22.001Z",
+      "digest": "390a45ec0a8712ced8d1fb523a9158d492ce61cfe24e87bc1865180bb4a39989",
+      "file": "0003.json",
+      "waves_cleared": 1
+    },
+    {
+      "captured_at": "2026-09-02T16:05:34.190Z",
+      "digest": "01836f7f8102a23add25961f08d6ed38154d8cbf3a92249a85e7116d37b5f1d8",
+      "file": "0004.json",
+      "waves_cleared": 2
+    },
+    {
+      "captured_at": "2026-09-02T16:05:50.678Z",
+      "digest": "d467595a83798fdd2a482596ab996a826515d10173dd0d1d629f26e889749aa5",
+      "file": "0005.json",
+      "waves_cleared": 2
+    },
+    {
+      "captured_at": "2026-09-02T16:06:20.025Z",
+      "digest": "d1da937dbb87314554e76c670f89f5a550fbe21c1bdde064a169ff51e724fe4c",
+      "file": "0006.json",
+      "waves_cleared": 2
+    },
+    {
+      "captured_at": "2026-09-02T16:06:26.317Z",
+      "digest": "7280a973e1f8fc91d9742643b6e7da4ac8ce4037e9b5792829f6f814391b4573",
+      "file": "0007.json",
+      "waves_cleared": 3
+    },
+    {
+      "captured_at": "2026-09-02T16:06:38.686Z",
+      "digest": "525911ca88fad88b6beb593fb53ce1de07f2437961e338d003899662c9dc4a9e",
+      "file": "0008.json",
+      "waves_cleared": 3
+    },
+    {
+      "captured_at": "2026-09-02T16:07:11.457Z",
+      "digest": "563cf321c154dfad19b84b3489173d213753f667f036d179df2b0e9bbfd96d7b",
+      "file": "0009.json",
+      "waves_cleared": 3
+    },
+    {
+      "captured_at": "2026-09-02T16:07:17.740Z",
+      "digest": "d2b89fd4543affac2508e73c828541b71168596e10ac034e4d6ed7507885c217",
+      "file": "0010.json",
+      "waves_cleared": 4
+    },
+    {
+      "captured_at": "2026-09-02T16:07:32.410Z",
+      "digest": "b30a0be6237f0548b2e29fe1a15d60e1471447cba951db298dbb7343e543cea9",
+      "file": "0011.json",
+      "waves_cleared": 4
+    },
+    {
+      "captured_at": "2026-09-02T16:08:14.313Z",
+      "digest": "e1abb83e1436e126fb4764896fc17563f72084cbcaee43628add5aa77818676f",
+      "file": "0012.json",
+      "waves_cleared": 4
+    },
+    {
+      "captured_at": "2026-09-02T16:08:26.902Z",
+      "digest": "5dedbcc3557b9230d4206db62248733d326c8d1afbc73d7e2615ba4a6321aa37",
+      "file": "0013.json",
+      "waves_cleared": 5
+    },
+    {
+      "captured_at": "2026-09-02T16:08:39.499Z",
+      "digest": "699604b66317bb50f04495d77750f09443810fa391170094e409706c55ccfbbf",
+      "file": "0014.json",
+      "waves_cleared": 5
+    },
+    {
+      "captured_at": "2026-09-02T16:09:25.652Z",
+      "digest": "c3f95a50a57468b130e86b920fef9f1b902e13e04f28d856f894cbc1db4a2bef",
+      "file": "0015.json",
+      "waves_cleared": 5
+    },
+    {
+      "captured_at": "2026-09-02T16:09:29.851Z",
+      "digest": "63e8b1b8d4b1fa5d209f3e7b3d1443076cfb95decf72471aaa1b91a440f9c6e4",
+      "file": "0016.json",
+      "waves_cleared": 6
+    },
+    {
+      "captured_at": "2026-09-02T16:09:50.802Z",
+      "digest": "5bdaef43dcadc7ffba5a69a750907a14a337cc8bb15bbe2dda8cb8b6a3c22a77",
+      "file": "0017.json",
+      "waves_cleared": 6
+    },
+    {
+      "captured_at": "2026-09-02T16:10:41.210Z",
+      "digest": "16f540f186042a242bc695f0c2cbdf24ca8e272cd79a0a47a7791cce16490042",
+      "file": "0018.json",
+      "waves_cleared": 6
+    },
+    {
+      "captured_at": "2026-09-02T16:10:53.827Z",
+      "digest": "17a45818de889c21d0657d8238e622d7a71066b39fdc434cd78bc2f72b623838",
+      "file": "0019.json",
+      "waves_cleared": 7
+    },
+    {
+      "captured_at": "2026-09-02T16:11:08.514Z",
+      "digest": "5f69c4715b878ab6398914911c6aa446d7161a78b9bf49defae9499e3412d43a",
+      "file": "0020.json",
+      "waves_cleared": 7
+    },
+    {
+      "captured_at": "2026-09-02T16:12:05.121Z",
+      "digest": "71670c466786be4d0e9b7345cff4ff4f8ddc9de6757951aeb406947e117d0b41",
+      "file": "0021.json",
+      "waves_cleared": 7
+    },
+    {
+      "captured_at": "2026-09-02T16:12:15.617Z",
+      "digest": "302c0b46675ebb472e7a1fc6f68a9c80d7973edccc8b0add59d29a0b41277c51",
+      "file": "0022.json",
+      "waves_cleared": 8
+    },
+    {
+      "captured_at": "2026-09-02T16:12:32.366Z",
+      "digest": "179ddc82ce4b69f5697dbae232120a8819d3e0c54a76743389b20f62a4dcb9b5",
+      "file": "0023.json",
+      "waves_cleared": 8
+    },
+    {
+      "captured_at": "2026-09-02T16:13:31.087Z",
+      "digest": "9bb596aaedc71a9a64bba6d6b3faec82d34849740e71c88384fbea773c33ab05",
+      "file": "0024.json",
+      "waves_cleared": 8
+    },
+    {
+      "captured_at": "2026-09-02T16:13:35.284Z",
+      "digest": "c690493a26bf0bd34f833766bae0d17e98a1c581de88e7c690c83a304d7ede5b",
+      "file": "0025.json",
+      "waves_cleared": 9
+    },
+    {
+      "captured_at": "2026-09-02T16:13:54.179Z",
+      "digest": "47f4edbb676546ddcdf05d078d5b78cf92d78978e9cff6c82713d1954908b425",
+      "file": "0026.json",
+      "waves_cleared": 9
+    },
+    {
+      "captured_at": "2026-09-02T16:14:55.091Z",
+      "digest": "3fa527dc83d2f2c08408252aa38b3b0dc4e0465f4b4390b68a5049b644479703",
+      "file": "0027.json",
+      "waves_cleared": 9
+    },
+    {
+      "captured_at": "2026-09-02T16:15:07.661Z",
+      "digest": "c024688e388ad5e4c5b05764534a31a49a72f95495ea18bbbd917fcaf12a2b5c",
+      "file": "0028.json",
+      "waves_cleared": 10
+    },
+    {
+      "captured_at": "2026-09-02T16:15:34.899Z",
+      "digest": "ffb89ae334df31b371b3206e1fd24468dd263c6bd553d92c115f96c0e1a4f1cf",
+      "file": "0029.json",
+      "waves_cleared": 10
+    },
+    {
+      "captured_at": "2026-09-02T16:16:35.755Z",
+      "digest": "af066d4e90ead87e488c5b00170dd4cda2387b69491331578f6f0d9f57565ed8",
+      "file": "0030.json",
+      "waves_cleared": 10
+    },
+    {
+      "captured_at": "2026-09-02T16:16:39.947Z",
+      "digest": "7efe4c93ca5eb831428c39a42d3b3ec628a66802cbd0aef9d0ed02e1cf0576c4",
+      "file": "0031.json",
+      "waves_cleared": 11
+    },
+    {
+      "captured_at": "2026-09-02T16:16:54.653Z",
+      "digest": "b970650b8fbf1197a5f8d2b023b69940049c421a81968c619efcf93286435050",
+      "file": "0032.json",
+      "waves_cleared": 11
+    },
+    {
+      "captured_at": "2026-09-02T16:17:55.476Z",
+      "digest": "27681c53f1919c2f0ccdf9da7832fb93fa0ea0d1e666878cb577e829ac518ca0",
+      "file": "0033.json",
+      "waves_cleared": 11
+    },
+    {
+      "captured_at": "2026-09-02T16:18:14.336Z",
+      "digest": "ee4f8ce0fb3db429bb18dd9be5925ade3556b1250f53d05ba1686cbc57b3bc2d",
+      "file": "0034.json",
+      "waves_cleared": 12
+    },
+    {
+      "captured_at": "2026-09-02T16:18:58.427Z",
+      "digest": "4d44dd1278ee21621f2ad367d47b6a2eb071396eee00f30b0b9b18f125d648f7",
+      "file": "0035.json",
+      "waves_cleared": 12
+    },
+    {
+      "captured_at": "2026-09-02T16:19:59.230Z",
+      "digest": "0ae57c786a4d3593679864b74e606eace2db7acd8429f322855e0afae1d45f34",
+      "file": "0036.json",
+      "waves_cleared": 12
+    },
+    {
+      "captured_at": "2026-09-02T16:20:11.849Z",
+      "digest": "5320904088fd336c33a37285372fab533d4f09b1c51a80fbac1860e3a2ace2bd",
+      "file": "0037.json",
+      "waves_cleared": 13
+    },
+    {
+      "captured_at": "2026-09-02T16:20:45.520Z",
+      "digest": "3ce1e62278ffdb397c783f3b7204dc9eed140d26dba9b980411273492770b7f6",
+      "file": "0038.json",
+      "waves_cleared": 13
+    },
+    {
+      "captured_at": "2026-09-02T16:21:46.427Z",
+      "digest": "1a2dfece51cc82f718e1bf69537c317a5ad2c0dc8127e3b3cd330d21e34975b1",
+      "file": "0039.json",
+      "waves_cleared": 13
+    },
+    {
+      "captured_at": "2026-09-02T16:21:52.691Z",
+      "digest": "bfcf4c76704bfb26b9b66c07f0e5b2b3c6d2c1ebcb72b72179c587e3d206c3dd",
+      "file": "0040.json",
+      "waves_cleared": 14
+    },
+    {
+      "captured_at": "2026-09-02T16:22:17.871Z",
+      "digest": "21961f1326203e2367d0c5e08d25010835dccd6af82b734ac5c47296fa44a6e9",
+      "file": "0041.json",
+      "waves_cleared": 14
+    },
+    {
+      "captured_at": "2026-09-02T16:23:18.769Z",
+      "digest": "02aadfacb8b57fb211397158f7090eec7da140e1452cd79224568c9db2ebeaaf",
+      "file": "0042.json",
+      "waves_cleared": 14
+    },
+    {
+      "captured_at": "2026-09-02T16:23:31.343Z",
+      "digest": "e902255181558d27b5511ad3239735e92cb0455cde58f472559c21c5ec738623",
+      "file": "0043.json",
+      "waves_cleared": 15
+    },
+    {
+      "captured_at": "2026-09-02T16:23:54.422Z",
+      "digest": "8fbb99cb4fc93a410811177d5d060c9474165733666a895c8ab417dd0ed0d8f4",
+      "file": "0044.json",
+      "waves_cleared": 15
+    },
+    {
+      "captured_at": "2026-09-02T16:24:55.329Z",
+      "digest": "44cbc8851b322f8297cc57d7f6564f9cdb5f2b60e3a088f45912066845459945",
+      "file": "0045.json",
+      "waves_cleared": 15
+    },
+    {
+      "captured_at": "2026-09-02T16:25:01.606Z",
+      "digest": "a7cd656453111b828ef0cd1c7a70de751ebf71e7b9aaf83cd7b2e18ab83b2b74",
+      "file": "0046.json",
+      "waves_cleared": 16
+    },
+    {
+      "captured_at": "2026-09-02T16:25:41.464Z",
+      "digest": "763368f226f2b0d2cf66ad74dd0be46eb8869b5d0fb5e5874fcb2b2b5b7ac9e9",
+      "file": "0047.json",
+      "waves_cleared": 16
+    },
+    {
+      "captured_at": "2026-09-02T16:26:42.325Z",
+      "digest": "3d4e01c43a20822bb45bed4721d05b72ff8847d2a972c4c88d1f6b46d8fe1a81",
+      "file": "0048.json",
+      "waves_cleared": 16
+    },
+    {
+      "captured_at": "2026-09-02T16:26:48.634Z",
+      "digest": "8592830b15b95485e94b134ec9cd9601960fabace6d66218ffaf6f5dde16888a",
+      "file": "0049.json",
+      "waves_cleared": 17
+    },
+    {
+      "captured_at": "2026-09-02T16:27:26.424Z",
+      "digest": "a066f25e4a2d53eb85afb725f2dfb742510fd72e39d73407458996480ecad84f",
+      "file": "0050.json",
+      "waves_cleared": 17
+    },
+    {
+      "captured_at": "2026-09-02T16:28:27.354Z",
+      "digest": "0297e3ab791b669c260ced115c727f67031a2ff37a64da514fd3c3c9928d8f8a",
+      "file": "0051.json",
+      "waves_cleared": 17
+    },
+    {
+      "captured_at": "2026-09-02T16:28:31.560Z",
+      "digest": "c0a6380a3d6a8afec23b88d4554b65b1b7aa47ccbf1849eeda48b10171f45c27",
+      "file": "0052.json",
+      "waves_cleared": 18
+    },
+    {
+      "captured_at": "2026-09-02T16:28:56.774Z",
+      "digest": "88ac47b3fd61509e438e81b75ccfce35c97dd8e4e637ecbe052344a6f9b5a66a",
+      "file": "0053.json",
+      "waves_cleared": 18
+    },
+    {
+      "captured_at": "2026-09-02T16:29:57.661Z",
+      "digest": "15b4fa2654fb9d811534fe938a4b1a63ffc75366082beb79f8f1547ca91e30c2",
+      "file": "0054.json",
+      "waves_cleared": 18
+    },
+    {
+      "captured_at": "2026-09-02T16:30:03.921Z",
+      "digest": "9ae228deb2af134331696ac327a96d44840a216afe732334f7538525db460662",
+      "file": "0055.json",
+      "waves_cleared": 19
+    },
+    {
+      "captured_at": "2026-09-02T16:30:14.431Z",
+      "digest": "d4ccbd3eb6d2ac8625376b92bf84636a9dfeba281e89dc7974788ef8897940e2",
+      "file": "0056.json",
+      "waves_cleared": 19
+    }
+  ],
+  "started_at": "2026-09-02T16:04:46.741Z",
+  "zone": 1
+}
