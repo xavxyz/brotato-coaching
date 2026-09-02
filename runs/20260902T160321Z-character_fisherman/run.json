@@ -1,0 +1,29 @@
+{
+  "character": "character_fisherman",
+  "danger": 3,
+  "ended_at": "2026-09-02T16:04:17.814Z",
+  "last_captured_at": "2026-09-02T16:04:01.049Z",
+  "run_id": "20260902T160321Z-character_fisherman",
+  "snapshots": [
+    {
+      "captured_at": "2026-09-02T16:03:21.260Z",
+      "digest": "8668f20a73ee01a712b056fb5c4233191dff89cdf1dacb39c8bc584d79716e7f",
+      "file": "0001.json",
+      "waves_cleared": 1
+    },
+    {
+      "captured_at": "2026-09-02T16:03:35.953Z",
+      "digest": "654dabfa31d1da1be3041d0405754d7bd70d30e28c77d5383ebdf78e4522e3d0",
+      "file": "0002.json",
+      "waves_cleared": 1
+    },
+    {
+      "captured_at": "2026-09-02T16:04:01.049Z",
+      "digest": "0624de6dcff5c00769c9fe7947e04bee46cd4c2c5754a46e7f186c281981cdca",
+      "file": "0003.json",
+      "waves_cleared": 1
+    }
+  ],
+  "started_at": "2026-09-02T16:03:21.258Z",
+  "zone": 1
+}
