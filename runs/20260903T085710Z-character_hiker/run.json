@@ -1,0 +1,95 @@
+{
+  "character": "character_hiker",
+  "danger": 4,
+  "ended_at": "2026-09-03T09:01:58.208Z",
+  "last_captured_at": "2026-09-03T09:01:20.414Z",
+  "run_id": "20260903T085710Z-character_hiker",
+  "snapshots": [
+    {
+      "captured_at": "2026-09-03T08:57:10.764Z",
+      "digest": "e2398f1333aa07b728865c397e8b0c5a02971bf7b9654013dcff7f79337cd458",
+      "file": "0001.json",
+      "waves_cleared": 1
+    },
+    {
+      "captured_at": "2026-09-03T08:57:27.538Z",
+      "digest": "6fc9adc204b0388164fe64d22b25e16bfb3c3cdfb0a66c169266b5fe0855de75",
+      "file": "0002.json",
+      "waves_cleared": 1
+    },
+    {
+      "captured_at": "2026-09-03T08:57:52.723Z",
+      "digest": "d50a7c2d52f731ed298bfe040eda3c692e82cb4b023a9588e8774666b6772319",
+      "file": "0003.json",
+      "waves_cleared": 1
+    },
+    {
+      "captured_at": "2026-09-03T08:58:07.325Z",
+      "digest": "0f5b72e9ad5f61b726f211bc6960c269cf67017342de76e3e3b1b59507e10031",
+      "file": "0004.json",
+      "waves_cleared": 2
+    },
+    {
+      "captured_at": "2026-09-03T08:58:17.789Z",
+      "digest": "2fb52f5e19965980f28b17f2fe9c0b58168ce8bebc44ffb0116799bb37a9ff65",
+      "file": "0005.json",
+      "waves_cleared": 2
+    },
+    {
+      "captured_at": "2026-09-03T08:58:49.223Z",
+      "digest": "5beb47d386d7db9259080b96cdb451d291d6f17e7a89c0337a2849c0740fa1c0",
+      "file": "0006.json",
+      "waves_cleared": 2
+    },
+    {
+      "captured_at": "2026-09-03T08:58:55.517Z",
+      "digest": "c4687993154340806e5acad5a0b32ea273f640f5cb9de9480ca970f564474544",
+      "file": "0007.json",
+      "waves_cleared": 3
+    },
+    {
+      "captured_at": "2026-09-03T08:59:06.020Z",
+      "digest": "932e340905a727ea17c09bb6cd631afcac58a18e7c653922cbcd25725dd09480",
+      "file": "0008.json",
+      "waves_cleared": 3
+    },
+    {
+      "captured_at": "2026-09-03T08:59:39.589Z",
+      "digest": "1a3bdcbe0aac38a1005dc939ca0ddd6f3c52ff49a6a9eef868dad25e8363f816",
+      "file": "0009.json",
+      "waves_cleared": 3
+    },
+    {
+      "captured_at": "2026-09-03T08:59:47.982Z",
+      "digest": "60d96d0b158166c1ee79d643125028fab109f3d7d4f08f8274f2bacf67b82431",
+      "file": "0010.json",
+      "waves_cleared": 4
+    },
+    {
+      "captured_at": "2026-09-03T09:00:06.890Z",
+      "digest": "e79f7a9a372f9e5fbf130241d475f8fcacb7ddff6d9f483da2cbf84e990aeded",
+      "file": "0011.json",
+      "waves_cleared": 4
+    },
+    {
+      "captured_at": "2026-09-03T09:00:46.747Z",
+      "digest": "cc9576260aea262e6fa20a4d8af1995ea04f31f630bf1aa8039c359890a7d92b",
+      "file": "0012.json",
+      "waves_cleared": 4
+    },
+    {
+      "captured_at": "2026-09-03T09:00:57.237Z",
+      "digest": "5067f8a0840700fd2a975e82ac11d547763398f5fcdf1b6d40faf090249699ba",
+      "file": "0013.json",
+      "waves_cleared": 5
+    },
+    {
+      "captured_at": "2026-09-03T09:01:20.414Z",
+      "digest": "17ed7309b563aa1e62f34364751bfee1ea9398846e595923ef6dde60baa1be2c",
+      "file": "0014.json",
+      "waves_cleared": 5
+    }
+  ],
+  "started_at": "2026-09-03T08:57:10.762Z",
+  "zone": 1
+}
