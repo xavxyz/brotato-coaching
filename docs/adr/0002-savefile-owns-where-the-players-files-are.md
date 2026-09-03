@@ -45,7 +45,8 @@ diverges again, and nothing fails until a user notices.
    no optional field and no unreachable "no save directory" branch. Reviewing a
    captured run must not need a Brotato install, and neither must inspecting or
    stopping a watcher: `runs`, `snapshots`, `start_watcher`, `stop_watcher` and
-   `watcher_status` answer from `runs/` alone, so `watch --status` and
+   `watcher_status` answer from `runs/` alone — `start_watcher` is also handed
+   what to spawn (#28), but still asks nothing about the game — so `watch --status` and
    `watch --stop` keep working when the save root moves or is unmounted under a
    running watcher. `__main__` resolves the directory lazily, for `--once`,
    `--start` and the bare watch loop only, and "no-save-directory" is therefore
@@ -97,3 +98,10 @@ diverges again, and nothing fails until a user notices.
   the same discovery — but the remaining two travel as string literals through a
   subprocess, where `tach` cannot see them. Eliminating that means moving process
   launch to the app tier, which is left for its own change.
+
+  _Closed by #28._ That change moved process launch to the app tier without
+  reopening this decision: `__main__` now hands `start_watcher` the command to
+  spawn and `_settings.watcher_environment()` names what to spawn it with, taking
+  the values off the `RunLog` in use so the two cannot drift. `runlog` spells
+  neither the variable names nor the command, and `tach` no longer has a
+  subprocess-shaped blind spot to see through.

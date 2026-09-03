@@ -62,6 +62,13 @@ class _Subcommand:
     arguments: tuple[_Argument, ...] = field(default_factory=tuple)
 
 
+# How the CLI re-enters itself, detached, to run the watcher. Spelled here
+# because it is this module that `-m brotato_coaching` starts: `runlog` is handed
+# the command, along with the settings to run it under, rather than composing
+# either for itself.
+_WATCHER_COMMAND = (sys.executable, "-m", "brotato_coaching", "watch")
+
+
 def _run_log() -> RunLog:
     """The one way to build a `RunLog`: `runs/` and how often to look at it.
 
@@ -171,7 +178,13 @@ def _watch(arguments: argparse.Namespace) -> int:
     if arguments.once:
         return _emit(run_log.capture_once(directory))
     if arguments.start:
-        return _emit(run_log.start_watcher())
+        # The child is pinned to the settings this `RunLog` is using, read back
+        # off it rather than resolved a second time: two resolutions could
+        # disagree, and a watcher filling the wrong directory says nothing.
+        environment = _settings.watcher_environment(
+            run_log.runs_directory, run_log.poll_interval
+        )
+        return _emit(run_log.start_watcher(_WATCHER_COMMAND, environment))
     try:
         for event in run_log.watch(directory):
             _emit(event, streaming=True)
