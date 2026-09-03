@@ -35,7 +35,7 @@ from pathlib import Path
 import pytest
 
 from conftest import INSTALL
-from pages import claims_in, wrong_claims
+from pages import derived_claims_in, wrong_claims
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 LESSONS = REPO_ROOT / "lessons"
@@ -235,7 +235,7 @@ def test_a_lesson_recommends_one_high_trust_source(page: Path) -> None:
     text = page.read_text()
     recommended = re.findall(r'data-read-next="([^"]+)"', text)
 
-    assert "RESOURCES.md" in text, "claims are cited to RESOURCES.md"
+    assert "RESOURCES.md" in text, "cited claims name a source id from RESOURCES.md"
     assert len(recommended) == 1, f"{len(recommended)} sources recommended, want 1"
     trust = trust_of(recommended[0])
     assert trust is not None, f"{recommended[0]} is not in RESOURCES.md"
@@ -261,7 +261,9 @@ def test_every_number_in_a_lesson_is_still_the_games(page: Path, game: dict) -> 
 @pytest.mark.parametrize("page", lessons(), ids=lambda page: page.name)
 def test_the_patch_stamp_is_the_installed_patch(page: Path, game: dict) -> None:
     assert INSTALL is not None
-    stamps = [text for claim, text in claims_in(page) if claim == "game-version"]
+    stamps = [
+        text for path, text in derived_claims_in(page) if path == "game-version"
+    ]
 
     assert stamps, f"{page.name} is not patch-stamped"
     assert all(stamp == INSTALL.version for stamp in stamps)

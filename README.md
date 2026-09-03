@@ -113,7 +113,7 @@ error messages deliberately do not echo it back.
 | `MISSION.md` | The reason for learning, and the honest baseline it is measured against. |
 | `CONTEXT.md` | The domain glossary — the game's vocabulary and the workspace's, one meaning each. |
 | `NOTES.md` | Standing preferences, and JPot's recorded heuristics. |
-| `RESOURCES.md` | The sources every claim is cited against, and the patch stamp. |
+| `RESOURCES.md` | The sources every cited claim names, and the workspace's patch stamp. |
 | `docs/adr/` | Decisions, with the context that produced them. |
 | `docs/research/` | Research passes: stat mechanics, shop economy, wave scaling, weapon classes. |
 | `runs/` | Captured runs. Committed — they are the player's own data. |
