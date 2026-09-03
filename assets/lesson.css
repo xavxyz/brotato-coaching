@@ -15,42 +15,190 @@
  * Themes: light and dark, chosen by the system, overridden by the toggle, remembered in
  * localStorage by assets/lesson.js. Printing always uses light ink on white paper regardless
  * of the theme on screen.
+ *
+ * ---------------------------------------------------------------------------------------
+ * WHERE THE LOOK COMES FROM
+ *
+ * Every colour and every measurement below is read off the installed game rather than
+ * remembered or eyeballed. `gamedata` opens the `.pck` to extract characters and weapons;
+ * the same container holds `res://resources/themes/` and `res://resources/fonts/`, which is
+ * where these were read. Each token names the resource it came from, in `res://` terms, so a
+ * later patch can be checked against the same file rather than against this comment.
+ *
+ * A few tokens have no game value to name, because a page needs surfaces and dividers a game
+ * HUD never does. Those say **derived**, and say what they were derived from. A token that
+ * says neither would be the failure this whole comment exists to prevent.
+ *
+ * Read on Brotato 1.1.12.0.beta-3. Godot stores colour as four floats in 0..1; the hex here
+ * is that value rounded to 8 bits, and where the game draws a colour at partial alpha over
+ * a known surface the hex is the composite, because a token has to be a single opaque value
+ * for its contrast to mean anything.
+ *
+ * Nothing the game owns is committed. The palette, the corner radii and the border weights
+ * are facts about the look, not the game's content. The one file that does ship —
+ * `assets/fonts/anybody-*.woff2` — is Anybody, which the game licenses under the SIL Open
+ * Font License 1.1 the same way this repo does; it comes from Google Fonts, not from the
+ * `.pck`, and its licence is committed beside it in `assets/fonts/OFL.txt`.
+ *
+ * The one thing the game's look is not allowed to cost is reading. A tooltip is up for two
+ * seconds and can afford a low-contrast panel; a lesson is read for ten minutes and cannot.
+ * So body prose keeps a readable text face, the game's font is used for headings, chrome and
+ * numbers, and every ink-on-surface pairing clears WCAG AA in both themes —
+ * `tests/test_lesson_style.py` scores them off this file and fails if one slips.
  */
+
+/* ---------------------------------------------------------------- the game's font */
+
+/*
+ * Anybody, by the Anybody Project Authors, SIL Open Font License 1.1. The game's own UI
+ * font: every `res://resources/fonts/actual/base/font_*.tres` names
+ * `res://resources/fonts/raw/Anybody-Medium.ttf` as its `font_data`. It is not a pixel
+ * font — Brotato's chrome is a squarish variable grotesque, and matching the game means
+ * matching that rather than the pixel face the arena sprites suggest.
+ *
+ * Shipped as the Google Fonts latin and latin-ext subsets of the variable face, so one
+ * file covers every weight the page asks for, and so a lesson opened from a file:// URL
+ * on a train still looks like the game.
+ *
+ * What is deliberately not taken is the black outline every `font_*_outline.tres` puts round
+ * its type. The game needs it because its text sits on a bright arena; here the text sits on
+ * a dark panel, where a black outline is invisible and does nothing but erode the letterform
+ * it was meant to protect. The weight it bought is bought instead by the face, at 600 and 700.
+ */
+@font-face {
+  font-family: "Anybody";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/anybody-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Anybody";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/anybody-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+    U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
 
 /* ---------------------------------------------------------------- theme tokens */
 
 /* Both palettes live here once, as light-dark() pairs. The used value follows the element's
-   color-scheme: the system's by default, or whichever one data-theme pins below. */
+   color-scheme: the system's by default, or whichever one data-theme pins below.
+
+   Dark is the game's own scheme, read off its resources. Light is not: the game has no light
+   mode, so it is the same palette turned over — the codex cream that Brotato prints its text
+   in becomes the paper, and the black it prints that text on becomes the ink. Where a game
+   colour cannot survive that turn, the comment says so and says what was done instead. */
 :root {
   color-scheme: light dark;
 
-  --bg: light-dark(#fbfaf7, #16161a);
-  --bg-raised: light-dark(#ffffff, #1f1f25);
-  --bg-sunken: light-dark(#f1efe9, #111114);
-  --ink: light-dark(#1d1c1a, #eceae5);
-  --ink-muted: light-dark(#5d5a53, #a9a59d);
-  --ink-faint: light-dark(#8b877e, #7b7770);
-  --rule: light-dark(#ddd8cd, #33333c);
-  --accent: light-dark(#a8442a, #e8895f);
-  --accent-wash: light-dark(#f7e8e2, #2a2028);
-  /* Right and wrong in a quiz. Never the only signal: a marked option always
-     carries its note too, so a reader who sees no colour loses nothing. */
-  --good: light-dark(#2f6b3f, #79b98c);
-  --bad: light-dark(#9a3d2f, #e08f7e);
-  --shadow: light-dark(
-    0 1px 2px rgb(29 28 26 / 8%),
-    0 1px 2px rgb(0 0 0 / 40%)
-  ), light-dark(
-    0 4px 16px rgb(29 28 26 / 6%),
-    0 4px 16px rgb(0 0 0 / 30%)
-  );
+  /* The page itself. Dark is the game's text field, `LineEdit/styles/normal` in
+     res://resources/themes/base_theme.tres — Color(0.137, 0.161, 0.208) at alpha 0.784,
+     composited over the black it is drawn on. Light is the codex's own cream,
+     res://ui/menus/pages/menu_codex/codex_entity_description.tscn. */
+  --bg: light-dark(#faf4cc, #1b2029);
 
-  --measure: 34rem;
+  /* A panel. res://resources/themes/panel/panel_style.tres is black at alpha 0.902, so in
+     the game a panel is *darker* than what it sits on rather than lighter; that inversion is
+     most of why Brotato's menus read as Brotato, and it is kept. Light takes the brighter
+     cream from res://ui/menus/pages/menu_options.tscn. */
+  --bg-raised: light-dark(#fffde4, #05070a);
+
+  /* An inset field — code, a pre block. Light is the codex's secondary cream,
+     res://ui/menus/pages/menu_codex/codex_entity_description.tscn, Color(0.918, 0.886, 0.690).
+     Dark is **derived**: the game has no third dark surface, because a HUD has a panel and a
+     backdrop and nothing between them, and a page that sets code apart needs one. It is the
+     panel lifted a little off black, sitting between `--bg-raised` and `--bg`. */
+  --bg-sunken: light-dark(#eae2b0, #10141a);
+
+  /* Running text. Dark is the cream the codex writes entity descriptions in,
+     Color(0.980, 0.957, 0.800). Light is the tooltip's near-black,
+     res://resources/themes/panel/tooltip_style.tres, Color(0.0588, 0.0588, 0.0588). */
+  --ink: light-dark(#0f0f0f, #faf4cc);
+
+  /* The game dims text with alpha rather than with a second colour, so what is taken here is
+     the alphas rather than the colours: 0.761 and 0.588, both used on white in
+     res://resources/themes/base_theme.tres and res://ui/menus/pages/menu_codex.tscn.
+     Dark applies them the game's way, white over the page. Light has no game value to apply
+     them to — Brotato never dims text on a light surface — so it is **derived**: the same two
+     alphas, black over the paper, warmed towards the cream they sit on. */
+  --ink-muted: light-dark(#3a3a2e, #c6cbd1);
+  --ink-faint: light-dark(#55554a, #a3a9b2);
+
+  /* Borders and dividers, and the one place the game's own value cannot be taken twice.
+     `panel_style.tres` outlines every panel in flat black, `border_color = Color(0, 0, 0, 1)`
+     — which works because a Brotato panel is a black slab on a bright arena, so the outline
+     falls on the arena side. Here the panel is black on a dark page, and a black outline on
+     it scores 1.04:1: invisible, in the theme this file calls the game's own.
+     So each theme takes the game's answer for its own situation. Light keeps the black
+     outline, which is what it is for. Dark takes the other tool the game divides with, the
+     white separator sprite `res://resources/themes/separator/separator_white.png`, at the
+     0.42 white alpha `res://ui/menus/run/character_selection.tscn` dims chrome to,
+     composited over the page.
+     `--rule-soft` is for the places a page needs a divider every few lines, such as table
+     rows, where a full-strength outline would fence the reader in: the same two colours at
+     the 0.2 alpha `base_theme.tres` uses to dim, over the page. */
+  --rule: light-dark(#000000, #7b7e83);
+  --rule-soft: light-dark(#c8c3a3, #494d54);
+
+  /* Gold: the border `special_button_theme.tres` puts on the button that matters,
+     Color(1, 0.843, 0). Straight from the game on dark. On paper it fails contrast against
+     cream at any size, so light gets the same hue taken down until it passes AA — the game
+     never has to put its gold on a light surface, and this page does. */
+  --accent: light-dark(#6b4e00, #ffd700);
+
+  /* The surface a recall prompt or a quiz question sits on: the game's *focused* text field,
+     `LineEdit/styles/focus`, Color(0.247, 0.286, 0.361), at half strength over the page —
+     the thing being worked on, lit slightly. Light is the page cream warmed the same way. */
+  --accent-wash: light-dark(#f2ead0, #2d3542);
+
+  /* Right and wrong in a quiz. The greens and reds the game marks values with in
+     res://ui/menus/debug/debug_menu.tscn, Color(0.557, 1, 0.627) and Color(1, 0.482, 0.482).
+     Never the only signal: a marked option always carries its note too, so a reader who sees
+     no colour loses nothing. Light darkens both to clear AA on cream. */
+  --good: light-dark(#1f6b2b, #8effa0);
+  --bad: light-dark(#a32020, #ff7b7b);
+
+  /* **Derived**, in the sense that the game has no shadow to read: nothing in
+     res://resources/themes/ blurs anything, because Godot's StyleBoxFlat has no shadow to
+     set and Brotato never reaches past it. What the game does instead is stack flat black
+     edges, so this is an offset solid rather than a blur — the sticker edge, not a lift. */
+  --shadow: 0 3px 0 rgb(0 0 0 / 55%);
+
+  /* The reading column. Wide enough that a quiz option and its note sit on one line more
+     often than not — the game's panels are wide, and a narrow column fights them — while
+     staying inside the 60-to-90 characters a line of prose is comfortably read at. */
+  --measure: 39rem;
   --gutter: 1.5rem;
-  --radius: 8px;
 
-  --font-text: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
-  --font-ui: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  /* Geometry, from the same resources as the colours. `panel_style.tres` rounds a panel by 8
+     and `button_styles/button_normal.tres` rounds a button by 12; those are pixels against
+     the game's 40px menu type, so they are recorded here in `em` at that ratio and stay in
+     proportion at this page's smaller size. */
+  --radius: 0.2em; /* 8 / 40 */
+  --radius-control: 0.3em; /* 12 / 40 */
+
+  /* Panels carry a 5px border at that same 40px type — 0.125em, which is two pixels here
+     and reads as a hairline rather than as an outline. 3px keeps the game's weight without
+     borrowing the game's scale. */
+  --border: 3px;
+
+  /* The game pads a button by 15px across and 10px down, and a panel by 10px all round. */
+  --pad-control: 0.55em 0.85em; /* 10 / 15 against the button's own type */
+  --pad-panel: 0.95rem 1.1rem;
+
+  /* Anybody for anything that is chrome: a heading, a label, a number, a control. The
+     running text of a lesson is not chrome, and a squarish display grotesque is the wrong
+     face for three paragraphs of it, so prose keeps a plain reading sans. */
+  --font-ui: "Anybody", ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  --font-text: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
@@ -102,7 +250,7 @@ body > footer {
   align-items: flex-start;
   gap: 1rem;
   padding: 2.5rem 0 1.25rem;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: var(--border) solid var(--rule);
 }
 
 .page-header__text {
@@ -112,15 +260,18 @@ body > footer {
 
 .page-header h1 {
   margin: 0;
-  font-size: 1.9rem;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  font-family: var(--font-ui);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
 }
 
 .page-header .subtitle {
-  margin: 0.4rem 0 0;
+  margin: 0.5rem 0 0;
   color: var(--ink-muted);
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-size: 0.95rem;
 }
 
@@ -128,41 +279,57 @@ body > footer {
    derived claims were last rechecked against. See CONTEXT.md. */
 .patch-stamp {
   display: inline-block;
-  margin-top: 0.75rem;
-  padding: 0.15rem 0.5rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: var(--bg-sunken);
+  margin-top: 0.85rem;
+  padding: 0.2rem 0.6rem;
+  border: var(--border) solid var(--rule);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
   color: var(--ink-faint);
   font-family: var(--font-ui);
   font-size: 0.75rem;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-/* ---------------------------------------------------------------- theme toggle */
+/* ---------------------------------------------------------------- controls */
+
+/* The game has exactly one button idiom, and it is worth copying wholesale:
+   `button_normal.tres` is a rounded black slab with white type, and `button_hover.tres`
+   inverts it to white with black type — `Button/colors/font_color_hover = Color(0,0,0,1)`
+   in base_theme.tres. Nothing fades or lifts; the whole control flips. */
+.theme-toggle,
+.quiz__reveal {
+  padding: var(--pad-control);
+  border: var(--border) solid var(--rule);
+  border-radius: var(--radius-control);
+  background: var(--bg-raised);
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
 
 .theme-toggle {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.4rem 0.7rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: var(--bg-raised);
-  color: var(--ink-muted);
-  font-family: var(--font-ui);
-  font-size: 0.8rem;
-  cursor: pointer;
 }
 
-.theme-toggle:hover {
+.theme-toggle:hover,
+.quiz__reveal:hover {
   border-color: var(--accent);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--bg);
 }
 
-.theme-toggle:focus-visible {
-  outline: 2px solid var(--accent);
+.theme-toggle:focus-visible,
+.quiz__reveal:focus-visible {
+  outline: var(--border) solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -172,7 +339,8 @@ body > footer {
 }
 
 /* Nothing to toggle before the script runs; it removes this attribute. */
-.theme-toggle[hidden] {
+.theme-toggle[hidden],
+.quiz__reveal[hidden] {
   display: none;
 }
 
@@ -184,13 +352,18 @@ main {
 
 h2 {
   margin: 2.5rem 0 0.75rem;
-  font-size: 1.35rem;
-  line-height: 1.25;
+  font-family: var(--font-ui);
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.005em;
 }
 
 h3 {
   margin: 1.75rem 0 0.5rem;
+  font-family: var(--font-ui);
   font-size: 1.1rem;
+  font-weight: 600;
   line-height: 1.3;
 }
 
@@ -219,12 +392,14 @@ a {
 }
 
 strong {
-  font-weight: 650;
+  font-weight: 700;
 }
 
+/* A number in the game is always chrome — it is drawn in the UI font, in a black slab.
+   `code` is where a lesson puts an id or a coefficient, so it gets the same treatment. */
 code {
-  padding: 0.1em 0.35em;
-  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius);
   background: var(--bg-sunken);
   font-family: var(--font-mono);
   font-size: 0.85em;
@@ -234,7 +409,7 @@ pre {
   overflow-x: auto;
   margin: 0 0 1.1rem;
   padding: 0.9rem 1rem;
-  border: 1px solid var(--rule);
+  border: var(--border) solid var(--rule);
   border-radius: var(--radius);
   background: var(--bg-sunken);
 }
@@ -248,14 +423,14 @@ pre code {
 blockquote {
   margin: 0 0 1.1rem;
   padding: 0.1rem 0 0.1rem 1rem;
-  border-left: 3px solid var(--rule);
+  border-left: var(--border) solid var(--rule);
   color: var(--ink-muted);
 }
 
 hr {
   margin: 2.5rem 0;
   border: 0;
-  border-top: 1px solid var(--rule);
+  border-top: var(--border) solid var(--rule);
 }
 
 table {
@@ -269,24 +444,28 @@ table {
 th,
 td {
   padding: 0.5rem 0.6rem;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule-soft);
   text-align: left;
 }
 
 th {
+  border-bottom: var(--border) solid var(--rule);
   color: var(--ink-muted);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 /* ---------------------------------------------------------------- blocks */
 
-/* An aside that is worth stopping for: a warning, a reminder, a framing note. */
+/* An aside that is worth stopping for: a warning, a reminder, a framing note. The game's
+   panel, exactly — black slab, black outline, rounded 8 — wearing the gold border
+   `special_button_theme.tres` reserves for the choice that matters. */
 .callout {
-  margin: 0 0 1.25rem;
-  padding: 0.9rem 1.1rem;
-  border: 1px solid var(--rule);
-  border-left: 3px solid var(--accent);
+  margin: 0 0 1.4rem;
+  padding: var(--pad-panel);
+  border: var(--border) solid var(--rule);
+  border-left: 0.5rem solid var(--accent);
   border-radius: var(--radius);
   background: var(--bg-raised);
   box-shadow: var(--shadow);
@@ -297,11 +476,11 @@ th {
 }
 
 .callout__title {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.4rem;
   font-family: var(--font-ui);
   font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--accent);
 }
@@ -312,32 +491,41 @@ th {
   margin: 0.35rem 0 0;
   color: var(--ink-faint);
   font-family: var(--font-ui);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 /* A retrieval-practice prompt with a single revealed answer, for a point worth
-   recalling but not worth scoring. The interactive form is `.quiz` below. */
-.recall {
-  margin: 0 0 1.25rem;
-  padding: 1rem 1.1rem;
-  border: 1px dashed var(--rule);
+   recalling but not worth scoring. The interactive form is `.quiz` below.
+   Both wear the game's focused-field surface: this is the bit being worked on. */
+.recall,
+.quiz__question {
+  margin: 0 0 1.4rem;
+  padding: var(--pad-panel);
+  border: var(--border) solid var(--rule);
   border-radius: var(--radius);
   background: var(--accent-wash);
+  box-shadow: var(--shadow);
 }
 
-.recall > :last-child {
+.recall > :last-child,
+.quiz__question > :last-child {
   margin-bottom: 0;
 }
 
-.recall__prompt {
-  margin: 0 0 0.6rem;
-  font-weight: 650;
+.recall__prompt,
+.quiz__prompt {
+  margin: 0 0 0.7rem;
+  font-family: var(--font-ui);
+  font-weight: 600;
 }
 
 /* Answers stay collapsed so recall happens before recognition. */
 .recall details summary {
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--ink-muted);
   cursor: pointer;
 }
@@ -360,45 +548,8 @@ th {
   list-style: none;
 }
 
-.quiz__question {
-  margin: 0 0 1.25rem;
-  padding: 1rem 1.1rem;
-  border: 1px dashed var(--rule);
-  border-radius: var(--radius);
-  background: var(--accent-wash);
-}
-
-.quiz__question > :last-child {
-  margin-bottom: 0;
-}
-
-.quiz__prompt {
-  margin: 0 0 0.6rem;
-  font-weight: 650;
-}
-
-.quiz__reveal {
-  padding: 0.35rem 0.7rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: var(--bg-raised);
-  color: var(--ink-muted);
-  font-family: var(--font-ui);
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.quiz__reveal:hover {
-  border-color: var(--accent);
-  color: var(--ink);
-}
-
-.quiz__reveal[hidden] {
-  display: none;
-}
-
 .quiz__options {
-  margin: 0.6rem 0 0;
+  margin: 0.7rem 0 0;
   padding: 0;
   list-style: none;
 }
@@ -408,14 +559,15 @@ th {
 }
 
 /* Full width and left-aligned: the options are the same length by design, and a
-   centred or shrink-wrapped button would put that back on display. */
+   centred or shrink-wrapped button would put that back on display. Otherwise it is the
+   game's button — black slab, black outline, rounded 12 — and it inverts on hover the
+   way every button in the game does. */
 .quiz__choice {
   display: block;
   width: 100%;
-  padding: 0.5rem 0.7rem;
-  border: 1px solid var(--rule);
-  border-left: 3px solid var(--rule);
-  border-radius: var(--radius);
+  padding: 0.55rem 0.8rem;
+  border: var(--border) solid var(--rule);
+  border-radius: var(--radius-control);
   background: var(--bg-raised);
   color: var(--ink);
   font-family: var(--font-text);
@@ -426,10 +578,12 @@ th {
 
 .quiz__choice:hover:not(:disabled) {
   border-color: var(--accent);
+  background: var(--ink);
+  color: var(--bg);
 }
 
 .quiz__choice:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: var(--border) solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -442,15 +596,17 @@ th {
 .quiz__note {
   margin: 0.4rem 0 0 0.15rem;
   color: var(--ink-muted);
-  font-family: var(--font-ui);
-  font-size: 0.82rem;
+  font-family: var(--font-text);
+  font-size: 0.85rem;
 }
 
 .quiz__verdict {
-  margin: 0.75rem 0 0;
+  margin: 0.8rem 0 0;
   color: var(--ink-muted);
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
 .quiz__question[data-state="hidden"] .quiz__options {
@@ -463,12 +619,13 @@ th {
   display: none;
 }
 
+/* The game marks a value by recolouring its outline, not by tinting its fill. */
 .quiz__option[data-mark="answer"] .quiz__choice {
   border-color: var(--good);
 }
 
 .quiz__option[data-chosen] .quiz__choice {
-  font-weight: 650;
+  font-weight: 700;
 }
 
 .quiz__option[data-chosen][data-mark=""] .quiz__choice {
@@ -480,9 +637,9 @@ th {
 .page-footer {
   margin-top: 3rem;
   padding-top: 1.25rem;
-  border-top: 1px solid var(--rule);
+  border-top: var(--border) solid var(--rule);
   color: var(--ink-muted);
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-size: 0.85rem;
 }
 
@@ -493,7 +650,14 @@ th {
 /* ---------------------------------------------------------------- print */
 
 @media print {
-  /* Paper is white; ink is black. Screen theme is irrelevant to the printer. */
+  /* Paper is white; ink is black. Screen theme is irrelevant to the printer, and so is the
+     game's: none of the palette above survives here. What does survive is the shape — the
+     corner radii, the panel outlines, the pill of the patch stamp — so a printed lesson is
+     still recognisably the same page, in black on white.
+     The one measurement that changes is the border weight. 3px is chosen against a screen
+     pixel; on paper it is a third of a millimetre of solid toner around every panel on the
+     sheet, which is heavier than the screen ever looks. 1.5px prints at the weight 3px
+     displays at, which is the point of keeping it. */
   :root,
   :root[data-theme="dark"] {
     color-scheme: light;
@@ -504,10 +668,12 @@ th {
     --ink: #000000;
     --ink-muted: #333333;
     --ink-faint: #555555;
-    --rule: #999999;
+    --rule: #000000;
+    --rule-soft: #999999;
     --accent: #000000;
     --accent-wash: #ffffff;
     --shadow: none;
+    --border: 1.5px;
   }
 
   @page {
@@ -596,7 +762,7 @@ th {
   body.reference-doc main {
     columns: 2;
     column-gap: 9mm;
-    column-rule: 1px solid var(--rule);
+    column-rule: 1px solid var(--rule-soft);
   }
 
   /* Tables are the bulk of a reference doc and must be free to flow across the
