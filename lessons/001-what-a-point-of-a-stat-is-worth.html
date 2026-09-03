@@ -101,28 +101,28 @@
           <button class="quiz__reveal" type="button" hidden>Show the four options</button>
           <ul class="quiz__options">
             <li class="quiz__option" data-correct>
-              <button class="quiz__choice">Nothing at all: Knives ignore it</button>
+              <button class="quiz__choice" type="button">Nothing at all: Knives ignore it</button>
               <p class="quiz__note">
                 Knife IV lists Melee Damage and nothing else, so Ranged Damage is worth exactly
                 zero to it — however good the stat looks on the screen.
               </p>
             </li>
             <li class="quiz__option">
-              <button class="quiz__choice">Three damage, once, on each hit</button>
+              <button class="quiz__choice" type="button">Three damage, once, on each hit</button>
               <p class="quiz__note">
                 This is the stat screen's answer, not the weapon's. A flat stat only adds through a
                 coefficient on a weapon that lists it.
               </p>
             </li>
             <li class="quiz__option">
-              <button class="quiz__choice">Two damage, once, on each hit</button>
+              <button class="quiz__choice" type="button">Two damage, once, on each hit</button>
               <p class="quiz__note">
                 3 × 0.8 is the right arithmetic on the wrong stat: 0.8 is the Knife's coefficient
                 for <em>Melee</em> Damage.
               </p>
             </li>
             <li class="quiz__option">
-              <button class="quiz__choice">Nothing much: about half a damage</button>
+              <button class="quiz__choice" type="button">Nothing much: about half a damage</button>
               <p class="quiz__note">
                 Not "small" — zero. An unlisted stat has no coefficient at all, so there is no
                 small amount for it to be worth.
@@ -133,37 +133,41 @@
 
         <li class="quiz__question">
           <p class="quiz__prompt">
-            Twenty Ranged Damage adds +300 a hit to Obliterator IV, at ×15. SMG IV takes the same
-            stat at ×0.8. What do those twenty points add to the SMG?
+            Twenty Ranged Damage adds +300 a hit to Obliterator IV, at
+            ×<span data-claim="weapon:weapon_obliterator_4:scaling:stat_ranged_damage">15</span>.
+            SMG IV takes the same stat at
+            ×<span data-claim="weapon:weapon_smg_4:scaling:stat_ranged_damage">0.8</span>. What do
+            those twenty points add to the SMG?
           </p>
           <button class="quiz__reveal" type="button" hidden>Show the four options</button>
           <ul class="quiz__options">
             <li class="quiz__option" data-correct>
-              <button class="quiz__choice">About sixteen damage a hit</button>
+              <button class="quiz__choice" type="button">About sixteen damage a hit</button>
               <p class="quiz__note">
-                20 × 0.8. A point of Ranged Damage is not an amount of damage; it is whatever the
-                weapon holding it says, and here the spread is twentyfold.
+                20 × <span data-claim="weapon:weapon_smg_4:scaling:stat_ranged_damage">0.8</span>. A
+                point of Ranged Damage is not an amount of damage; it is whatever the weapon
+                holding it says, and here the spread is twentyfold.
               </p>
             </li>
             <li class="quiz__option">
-              <button class="quiz__choice">Three hundred damage a hit</button>
+              <button class="quiz__choice" type="button">Three hundred damage a hit</button>
               <p class="quiz__note">
                 That is the Obliterator's gain. Coefficients belong to weapons, not to stats, so
                 the same purchase pays differently in each hand.
               </p>
             </li>
             <li class="quiz__option">
-              <button class="quiz__choice">About sixty damage a hit</button>
+              <button class="quiz__choice" type="button">About sixty damage a hit</button>
               <p class="quiz__note">
                 No averaging happens: the SMG's own coefficient is applied, and it is one of the
                 smallest in the catalogue.
               </p>
             </li>
             <li class="quiz__option">
-              <button class="quiz__choice">About one damage a hit</button>
+              <button class="quiz__choice" type="button">About one damage a hit</button>
               <p class="quiz__note">
-                Closer to the truth than three hundred, but the coefficient multiplies the stat,
-                not the other way around: 0.8 × 20, not 20 ÷ 0.8.
+                That is near enough what a <em>single</em> point buys. Twenty were bought, and the
+                coefficient multiplies every one of them.
               </p>
             </li>
           </ul>
@@ -172,36 +176,38 @@
         <li class="quiz__question">
           <p class="quiz__prompt">
             Your Knife IV sits at 30 Melee Damage — 49 a hit. The shop offers +5 Melee Damage, or
-            +10% Damage. Which one is bigger this wave?
+            +20% Damage. Which is bigger this wave, and by how much?
           </p>
           <button class="quiz__reveal" type="button" hidden>Show the four options</button>
           <ul class="quiz__options">
-            <li class="quiz__option">
-              <button class="quiz__choice">The five Melee Damage, barely</button>
-              <p class="quiz__note">
-                +5 × 0.8 = +4, so 53. Close, but second — and it would have won at a smaller base,
-                which is the crossover worth carrying.
-              </p>
-            </li>
             <li class="quiz__option" data-correct>
-              <button class="quiz__choice">The ten percent Damage, barely</button>
+              <button class="quiz__choice" type="button">The percentage, by about six</button>
               <p class="quiz__note">
-                10% multiplies the whole 49, for +4.9. Percentages grow with the flat base beneath
-                them, so they overtake it as the run goes on.
+                20% of the whole 49 is +9.8, against +5 ×
+                <span data-claim="weapon:weapon_knife_4:scaling:stat_melee_damage">0.8</span> = +4
+                flat: 58.8 against 53.
               </p>
             </li>
             <li class="quiz__option">
-              <button class="quiz__choice">They are exactly equal here</button>
+              <button class="quiz__choice" type="button">The five Melee Damage, barely</button>
               <p class="quiz__note">
-                Four against 4.9 — near enough to make the point that the answer moves, but not a
-                tie at this base.
+                It would have won at a smaller base — flat scaling is what a percentage has to
+                multiply, so early in a run it is the only thing worth buying.
               </p>
             </li>
             <li class="quiz__option">
-              <button class="quiz__choice">The percent, by a landslide</button>
+              <button class="quiz__choice" type="button">They come out exactly equal</button>
               <p class="quiz__note">
-                % Damage multiplies what you already have, and at 49 damage a hit there is not yet
-                much to multiply.
+                Not at this base. The two are equal somewhere below it, and finding that crossover
+                in the shop is the whole skill.
+              </p>
+            </li>
+            <li class="quiz__option">
+              <button class="quiz__choice" type="button">The percentage, by about one</button>
+              <p class="quiz__note">
+                That is 20% of the Knife's base
+                <span data-claim="weapon:weapon_knife_4:damage">25</span> alone. % Damage
+                multiplies base <em>and</em> flat scaling together.
               </p>
             </li>
           </ul>
@@ -215,27 +221,27 @@
           <button class="quiz__reveal" type="button" hidden>Show the four options</button>
           <ul class="quiz__options">
             <li class="quiz__option" data-correct>
-              <button class="quiz__choice">Whether your weapons list that stat</button>
+              <button class="quiz__choice" type="button">Whether your weapons list that stat</button>
               <p class="quiz__note">
                 The transferable move, and it works on a character you have never played: read the
                 scaling lists in your hands, then the coefficients, then buy.
               </p>
             </li>
             <li class="quiz__option">
-              <button class="quiz__choice">Whether the stat screen goes higher</button>
+              <button class="quiz__choice" type="button">Whether the stat screen goes higher</button>
               <p class="quiz__note">
                 It always goes higher. That is the failure mode this lesson exists to break.
               </p>
             </li>
             <li class="quiz__option">
-              <button class="quiz__choice">Whether your potato favours that stat</button>
+              <button class="quiz__choice" type="button">Whether your character favours the stat</button>
               <p class="quiz__note">
                 A character's modifiers say what is cheap for it to reach, not what your current
                 weapons convert into damage. The weapon is the first check.
               </p>
             </li>
             <li class="quiz__option">
-              <button class="quiz__choice">Whether the asking price looks fair</button>
+              <button class="quiz__choice" type="button">Whether the asking price looks fair</button>
               <p class="quiz__note">
                 Price ranks purchases that are worth something. It cannot rescue a stat worth zero.
               </p>
@@ -250,9 +256,9 @@
         One source, not a reading list:
         <a href="https://brotato.wiki.spellsandguns.com/Weapons" data-read-next="STAT-S2"
           >the wiki's Weapons page</a
-        >, which states the scaling notation and works an example through it. It is patch 1.1.6.3
-        and this install is newer, so trust it for <em>how</em> and this workspace's extracted data
-        for <em>how much</em>. <span class="source-note">See RESOURCES.md for the source list.</span>
+        >, which states the scaling notation and works an example through it. Tier B, and patch 1.1.6.3 against a newer
+        install — but no tier-A source explains a formula, since official material is patch notes.
+        Trust it for <em>how</em>, and the extracted data for <em>how much</em>. <span class="source-note">See RESOURCES.md for the source list.</span>
       </p>
 
       <ul>

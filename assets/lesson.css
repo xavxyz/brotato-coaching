@@ -347,17 +347,11 @@ th {
 
 /* ---------------------------------------------------------------- quiz */
 
-/* The retrieval-practice component of a lesson; behaviour in assets/quiz.js.
-   The whole styling contract is `data-state` on a question:
-
-     (absent)  no script — every option and note is visible
-     hidden    the reader has not asked for the options yet
-     open      options shown, nothing chosen
-     correct   answered, and right
-     wrong     answered, and not right
-
-   Nothing is hidden in the markup, so the no-script page and the printed page
-   are both complete. */
+/* The retrieval-practice component of a lesson. Everything it styles is keyed
+   off `data-state` on a question, whose values assets/quiz.js defines and sets;
+   that file is where the markup contract and the state table live. The one
+   rule this end has to hold up: no state at all — no script, or printing —
+   means every option and note is visible. */
 
 .quiz {
   margin: 0 0 1.5rem;

@@ -42,26 +42,21 @@
 
   var VERDICTS = {
     correct: "Right — and worth saying why, out loud, before moving on.",
-    wrong: "Not this one. The answer is marked; read both notes.",
+    wrong: "Not this one. The answer is marked, and every note is open.",
   };
 
   function options(question) {
     return Array.prototype.slice.call(question.querySelectorAll(".quiz__option"));
   }
 
-  function verdictFor(question) {
-    var existing = question.querySelector(".quiz__verdict");
+  function say(question, verdict) {
+    var line = document.createElement("p");
 
-    if (existing) {
-      return existing;
-    }
-
-    var verdict = document.createElement("p");
-    verdict.className = "quiz__verdict";
+    line.className = "quiz__verdict";
     // Answering is a click, not a navigation, so the outcome has to be spoken.
-    verdict.setAttribute("role", "status");
-    question.appendChild(verdict);
-    return verdict;
+    line.setAttribute("role", "status");
+    line.textContent = verdict;
+    question.appendChild(line);
   }
 
   // The first answer is the only one that measures anything, so the question
@@ -75,7 +70,7 @@
     });
     chosen.dataset.chosen = "true";
     question.dataset.state = right ? "correct" : "wrong";
-    verdictFor(question).textContent = right ? VERDICTS.correct : VERDICTS.wrong;
+    say(question, right ? VERDICTS.correct : VERDICTS.wrong);
   }
 
   function wire(question) {
@@ -87,7 +82,6 @@
 
     question.dataset.state = "hidden";
     reveal.hidden = false;
-    reveal.setAttribute("type", "button");
     reveal.addEventListener("click", function () {
       question.dataset.state = "open";
       reveal.hidden = true;
@@ -101,7 +95,6 @@
       var choice = option.querySelector(".quiz__choice");
 
       if (choice) {
-        choice.setAttribute("type", "button");
         choice.addEventListener("click", function () {
           if (question.dataset.state === "open") {
             answer(question, option);
@@ -112,7 +105,10 @@
   }
 
   // Paper has no controls: a printed quiz is a page of questions with their
-  // answers, and the reader's own state is put back afterwards.
+  // answers, and the reader's own state is put back afterwards. lesson.js does
+  // the same for <details>, and the pair is repeated here rather than shared so
+  // that the shared file need not know a quiz exists — a page may load either
+  // script without the other.
   function openForPrinting() {
     each(".quiz__question[data-state]", function (question) {
       question.dataset.printedFrom = question.dataset.state;
