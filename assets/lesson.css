@@ -124,7 +124,8 @@ body > footer {
   font-size: 0.95rem;
 }
 
-/* Every page states the patch it was written against. */
+/* The page's patch stamp: the game build it was written against, and the one its
+   derived claims were last rechecked against. See CONTEXT.md. */
 .patch-stamp {
   display: inline-block;
   margin-top: 0.75rem;

@@ -348,7 +348,7 @@ def extracted(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 @pytest.fixture(scope="session")
 def game(extracted: Path) -> dict:
-    """The catalogues a page's `data-claim` numbers are re-derived from."""
+    """The catalogues a page's derived claims are re-derived from."""
     return {
         name: json.loads((extracted / f"{name}.json").read_text())
         for name in ("characters", "weapons", "items")
