@@ -172,7 +172,10 @@
      edges, so this is an offset solid rather than a blur — the sticker edge, not a lift. */
   --shadow: 0 3px 0 rgb(0 0 0 / 55%);
 
-  --measure: 34rem;
+  /* The reading column. Wide enough that a quiz option and its note sit on one line more
+     often than not — the game's panels are wide, and a narrow column fights them — while
+     staying inside the 60-to-90 characters a line of prose is comfortably read at. */
+  --measure: 39rem;
   --gutter: 1.5rem;
 
   /* Geometry, from the same resources as the colours. `panel_style.tres` rounds a panel by 8
