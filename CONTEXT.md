@@ -87,6 +87,13 @@ One short, self-contained teaching artefact built around retrieval practice. Rea
 after a session, never during one.
 _Avoid_: tutorial, exercise, module
 
+**Quiz**:
+The retrieval-practice component inside a lesson: a question answered from memory, then
+checked against options that are all the same length, with immediate feedback on the one
+chosen. Nothing about a quiz is scored or kept — what is tracked over time is the
+**drill**'s prediction hit rate, and the two are not the same thing.
+_Avoid_: test, exercise, questionnaire
+
 **Reference doc**:
 A compressed, printable page covering one concept, written to be reread rather than worked
 through. Always about a concept, never about a single character.

@@ -25,6 +25,7 @@ import pytest
 from brotato_coaching.gamedata import (
     GameInstall,
     InstallNotFound,
+    extract,
     find_install,
     godot_hash,
 )
@@ -334,3 +335,21 @@ def installed_game() -> GameInstall | None:
 
 
 INSTALL = installed_game()
+
+
+# Two suites check a published page's numbers against the extracted catalogues —
+# the reference docs and the lessons. Extraction is the slow part, so it happens
+# once for the whole session rather than once per suite.
+@pytest.fixture(scope="session")
+def extracted(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    assert INSTALL is not None
+    return extract(INSTALL, tmp_path_factory.mktemp("data")).directory
+
+
+@pytest.fixture(scope="session")
+def game(extracted: Path) -> dict:
+    """The catalogues a page's `data-claim` numbers are re-derived from."""
+    return {
+        name: json.loads((extracted / f"{name}.json").read_text())
+        for name in ("characters", "weapons", "items")
+    }
