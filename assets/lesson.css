@@ -33,6 +33,10 @@
   --rule: light-dark(#ddd8cd, #33333c);
   --accent: light-dark(#a8442a, #e8895f);
   --accent-wash: light-dark(#f7e8e2, #2a2028);
+  /* Right and wrong in a quiz. Never the only signal: a marked option always
+     carries its note too, so a reader who sees no colour loses nothing. */
+  --good: light-dark(#2f6b3f, #79b98c);
+  --bad: light-dark(#9a3d2f, #e08f7e);
   --shadow: light-dark(
     0 1px 2px rgb(29 28 26 / 8%),
     0 1px 2px rgb(0 0 0 / 40%)
@@ -310,7 +314,8 @@ th {
   font-size: 0.8rem;
 }
 
-/* A retrieval-practice prompt. Ticket #12 builds the interactive quiz on top of this. */
+/* A retrieval-practice prompt with a single revealed answer, for a point worth
+   recalling but not worth scoring. The interactive form is `.quiz` below. */
 .recall {
   margin: 0 0 1.25rem;
   padding: 1rem 1.1rem;
@@ -338,6 +343,141 @@ th {
 
 .recall details[open] summary {
   margin-bottom: 0.5rem;
+}
+
+/* ---------------------------------------------------------------- quiz */
+
+/* The retrieval-practice component of a lesson; behaviour in assets/quiz.js.
+   The whole styling contract is `data-state` on a question:
+
+     (absent)  no script — every option and note is visible
+     hidden    the reader has not asked for the options yet
+     open      options shown, nothing chosen
+     correct   answered, and right
+     wrong     answered, and not right
+
+   Nothing is hidden in the markup, so the no-script page and the printed page
+   are both complete. */
+
+.quiz {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.quiz__question {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--rule);
+  border-radius: var(--radius);
+  background: var(--accent-wash);
+}
+
+.quiz__question > :last-child {
+  margin-bottom: 0;
+}
+
+.quiz__prompt {
+  margin: 0 0 0.6rem;
+  font-weight: 650;
+}
+
+.quiz__reveal {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--bg-raised);
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.quiz__reveal:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.quiz__reveal[hidden] {
+  display: none;
+}
+
+.quiz__options {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quiz__option + .quiz__option {
+  margin-top: 0.5rem;
+}
+
+/* Full width and left-aligned: the options are the same length by design, and a
+   centred or shrink-wrapped button would put that back on display. */
+.quiz__choice {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quiz__choice:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.quiz__choice:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A locked question, not an unavailable control: the text stays fully legible. */
+.quiz__choice:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.quiz__note {
+  margin: 0.4rem 0 0 0.15rem;
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+}
+
+.quiz__verdict {
+  margin: 0.75rem 0 0;
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+}
+
+.quiz__question[data-state="hidden"] .quiz__options {
+  display: none;
+}
+
+/* A note is feedback. It appears with the answer, never before it. */
+.quiz__question[data-state="hidden"] .quiz__note,
+.quiz__question[data-state="open"] .quiz__note {
+  display: none;
+}
+
+.quiz__option[data-mark="answer"] .quiz__choice {
+  border-color: var(--good);
+}
+
+.quiz__option[data-chosen] .quiz__choice {
+  font-weight: 650;
+}
+
+.quiz__option[data-chosen][data-mark=""] .quiz__choice {
+  border-color: var(--bad);
 }
 
 /* ---------------------------------------------------------------- footer */
@@ -401,9 +541,17 @@ th {
 
   .callout,
   .recall,
+  .quiz__question,
   pre {
     box-shadow: none;
     break-inside: avoid;
+  }
+
+  /* quiz.js drops every question's state before printing, so the options and
+     their notes are already on the page and the control that showed them is
+     redundant. Safari fires no beforeprint event, so it is hidden here too. */
+  .quiz__reveal {
+    display: none;
   }
 
   h1,
