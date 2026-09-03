@@ -18,9 +18,10 @@ One page per concept — stat math, shop economy, wave scaling, weapon classes. 
 lookup tables. A page that can only be applied to one character has failed the mission, which
 is to derive a plan for a character never played.
 
-**Claims are cited and patch-stamped.**
-Every claim in a lesson or reference doc names its source, and every page names the patch it
-was written against. See `RESOURCES.md` for the source list.
+**Claims are cited or derived, and every page is patch-stamped.**
+A cited claim in a lesson or reference doc names its source; a derived claim names the field
+of extracted game data it comes from; and every page carries the patch stamp saying which
+build it was written against. See `RESOURCES.md` for the source list.
 
 **JPot's heuristics are recorded and attributed, never silently merged.**
 When a heuristic of JPot's and the extracted game data disagree, both are shown and the

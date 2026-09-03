@@ -1,11 +1,15 @@
 # Resources
 
-The sources this workspace's claims are grounded in. Every claim in a lesson or a reference
-doc cites an id from this file, so that a claim can be checked and so that a stale claim is
-traceable when a patch lands. Numeric claims should come from extracted game data instead — a
-source here is for *how the numbers work*, not *what the numbers are*.
+The sources this workspace's **cited claims** are grounded in. Every cited claim in a lesson
+or a reference doc names an id from this file, so that it can be rechecked by rereading the
+source and so that it is traceable when a patch lands. A claim that is a number belongs in the
+extracted game data instead, as a **derived claim** — a source here is for *how the numbers
+work*, not *what the numbers are*.
 
 ## Patch stamp
+
+The workspace's own patch stamp: the build every page here is stamped against, and the one a
+derived claim is rechecked against.
 
 | What | Value |
 | --- | --- |
@@ -17,8 +21,8 @@ source here is for *how the numbers work*, not *what the numbers are*.
 
 **The install is a beta branch that trails the current live patch.** Nothing below was read
 against the installed build; each source was read against whatever patch it names, and several
-name a patch *newer* than the install. Each row says which. Two consequences: a claim sourced from
-1.1.15.x may not hold on this install, and a claim checked against a beta may not survive the
+name a patch *newer* than the install. Each row says which. Two consequences: a cited claim sourced
+from 1.1.15.x may not hold on this install, and one checked against a beta may not survive the
 stable release of the same version — `MISSION.md` makes the same point.
 
 **How these numbers were obtained**, so they can be re-derived when the patch moves. This is a

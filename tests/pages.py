@@ -1,14 +1,17 @@
-"""The claim grammar every published page is checked against.
+"""Derived claims: the numbers a published page prints, rechecked against the game.
 
-A lesson and a reference doc are both HTML pages that state the game's numbers,
-and both go stale the same way: a patch moves a coefficient and the page keeps
-asserting the old one. So a number a page prints carries a `data-claim`
-attribute naming where in the extracted game data it came from, and the suite
-re-derives it.
+A lesson and a reference doc both state the game's numbers, and both go stale the
+same way: a patch moves a coefficient and the page keeps asserting the old one. So
+every number a page prints is a **derived claim**: it carries a **claim path** in a
+`data-claim` attribute, naming where in the extracted game data it came from, and
+this module re-derives it. A **cited claim** is the other kind, checked by rereading
+its source in `RESOURCES.md`, and nothing here can touch one.
 
-The grammar, in full:
+The claim path grammar, in full. It lives here rather than in `CONTEXT.md` because
+it names fields of the extracted data and moves when they do; the glossary defines
+what a claim path is, not which paths exist.
 
-    game-version                     the extraction's version stamp
+    game-version                     the extraction's patch stamp
     count:<catalogue>                how many weapons / characters / items exist
     weapon:<id>:<field>              a field of one weapon's stats, or its tier or class
     weapon:<id>:scaling:<stat>       one weapon's scaling coefficient for a stat
@@ -32,7 +35,7 @@ from pathlib import Path
 
 
 class Claims(HTMLParser):
-    """Every `data-claim` on a page, paired with the text that renders it.
+    """Every derived claim on a page: its claim path, and the text rendering it.
 
     A claim element holds text and nothing else. Markup inside one is rejected
     rather than parsed around: the whole point is that the number the suite
@@ -64,7 +67,7 @@ class Claims(HTMLParser):
             self._claim = None
 
 
-def claims_in(page: Path) -> list[tuple[str, str]]:
+def derived_claims_in(page: Path) -> list[tuple[str, str]]:
     parser = Claims()
     parser.feed(page.read_text())
     return parser.found
@@ -84,7 +87,7 @@ def number_in(text: str) -> tuple[float, int]:
 
 
 def expected(claim: str, game: dict) -> float | str:
-    """Re-derive one claim from the extracted data."""
+    """Re-derive one derived claim from the extracted data, by its claim path."""
     body, _, transform = claim.partition("#")
     parts = body.split(":")
     value = _resolve(parts, game)
@@ -103,9 +106,9 @@ def expected(claim: str, game: dict) -> float | str:
 
 
 def wrong_claims(page: Path, game: dict) -> list[str]:
-    """Every claim on `page` the extracted data no longer agrees with."""
+    """Every derived claim on `page` the extracted data no longer agrees with."""
     wrong = []
-    for claim, text in claims_in(page):
+    for claim, text in derived_claims_in(page):
         want = expected(claim, game)
         if isinstance(want, str):
             if text != want:
@@ -135,7 +138,7 @@ def _resolve(parts: list[str], game: dict) -> float | str:
         case ["scaling-max", stat]:
             return max(_coefficients(stat, game))
         case _:
-            raise AssertionError(f"unknown claim: {':'.join(parts)}")
+            raise AssertionError(f"unknown claim path: {':'.join(parts)}")
 
 
 def _weapon(identifier: str, game: dict) -> dict:

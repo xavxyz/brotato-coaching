@@ -99,6 +99,43 @@ A compressed, printable page covering one concept, written to be reread rather t
 through. Always about a concept, never about a single character.
 _Avoid_: cheat sheet, guide, notes
 
+**Claim**:
+A statement a lesson or a reference doc makes about the game that could later stop being
+true, and so is never left standing on the page alone. Every claim is one of two kinds, and
+which kind it is decides how it is checked and how it goes stale.
+_Avoid_: fact, assertion, statement
+
+**Derived claim**:
+A claim that is a number, carrying the path that re-derives it from extracted game data —
+`data-claim` in the HTML — so the suite rechecks it against the install on every run. What
+it says is the game's, never the workspace's, so a patch can make it wrong without anyone
+touching the page.
+_Avoid_: numeric claim, data claim, checked number
+
+**Cited claim**:
+A claim that reads the game rather than reports it — how the numbers work, not what they
+are — carrying a source id from `RESOURCES.md` instead of a path into data. No suite can
+check one; it is only as good as the source's trust tier, and rechecking it means a human
+rereading that source.
+_Avoid_: interpretive claim, interpretation, opinion
+
+**Claim path**:
+The value of a `data-claim` attribute: the route from a number printed on a page to the
+field in the extracted game data it came from, such as `weapon:pistol:damage`. The grammar
+of paths lives in `tests/pages.py`, beside the code that walks them, because it names fields
+of the extracted data and moves when they do.
+_Avoid_: claim id, claim key, selector
+
+**Patch stamp**:
+The game version a thing was written against, carried on the thing itself: a page prints one
+in its header, an extraction records one in its JSON, and `RESOURCES.md` carries the
+workspace's. It is stamped against the installed build's own declared version — never a
+version inferred from the game's containers — and appears in extracted data as
+`game_version`, which is the storage form, not the name. A stamp that no longer matches the
+installed patch is what staleness means here: the derived claims beneath it were checked
+against a build that is no longer on disk, and are unproven until rechecked.
+_Avoid_: version, build, game version, timestamp
+
 **Learning record**:
 A note written when the player's model of the game changes — a heuristic disproved, an
 assumption corrected. Not written for an ordinary mistake.
