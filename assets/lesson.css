@@ -20,9 +20,14 @@
  * WHERE THE LOOK COMES FROM
  *
  * Every colour and every measurement below is read off the installed game rather than
- * remembered or eyeballed. `extract` opens the `.pck`, so the resources naming them are
- * readable locally; each token says which resource it came from, in `res://` terms, so a
+ * remembered or eyeballed. `gamedata` opens the `.pck` to extract characters and weapons;
+ * the same container holds `res://resources/themes/` and `res://resources/fonts/`, which is
+ * where these were read. Each token names the resource it came from, in `res://` terms, so a
  * later patch can be checked against the same file rather than against this comment.
+ *
+ * A few tokens have no game value to name, because a page needs surfaces and dividers a game
+ * HUD never does. Those say **derived**, and say what they were derived from. A token that
+ * says neither would be the failure this whole comment exists to prevent.
  *
  * Read on Brotato 1.1.12.0.beta-3. Godot stores colour as four floats in 0..1; the hex here
  * is that value rounded to 8 bits, and where the game draws a colour at partial alpha over
@@ -54,6 +59,11 @@
  * Shipped as the Google Fonts latin and latin-ext subsets of the variable face, so one
  * file covers every weight the page asks for, and so a lesson opened from a file:// URL
  * on a train still looks like the game.
+ *
+ * What is deliberately not taken is the black outline every `font_*_outline.tres` puts round
+ * its type. The game needs it because its text sits on a bright arena; here the text sits on
+ * a dark panel, where a black outline is invisible and does nothing but erode the letterform
+ * it was meant to protect. The weight it bought is bought instead by the face, at 600 and 700.
  */
 @font-face {
   font-family: "Anybody";
@@ -101,8 +111,11 @@
      cream from res://ui/menus/pages/menu_options.tscn. */
   --bg-raised: light-dark(#fffde4, #05070a);
 
-  /* An inset field — code, a pre block. Dark is the panel lifted just off black; light is
-     the codex's secondary cream, Color(0.918, 0.886, 0.690). */
+  /* An inset field — code, a pre block. Light is the codex's secondary cream,
+     res://ui/menus/pages/menu_codex/codex_entity_description.tscn, Color(0.918, 0.886, 0.690).
+     Dark is **derived**: the game has no third dark surface, because a HUD has a panel and a
+     backdrop and nothing between them, and a page that sets code apart needs one. It is the
+     panel lifted a little off black, sitting between `--bg-raised` and `--bg`. */
   --bg-sunken: light-dark(#eae2b0, #10141a);
 
   /* Running text. Dark is the cream the codex writes entity descriptions in,
@@ -110,19 +123,30 @@
      res://resources/themes/panel/tooltip_style.tres, Color(0.0588, 0.0588, 0.0588). */
   --ink: light-dark(#0f0f0f, #faf4cc);
 
-  /* The game dims text with alpha rather than with a second colour. These are white at the
-     alphas base_theme.tres and the codex actually use — 0.761 and 0.588 — composited over
-     the page, so the steps are the game's even though the values are opaque. */
+  /* The game dims text with alpha rather than with a second colour, so what is taken here is
+     the alphas rather than the colours: 0.761 and 0.588, both used on white in
+     res://resources/themes/base_theme.tres and res://ui/menus/pages/menu_codex.tscn.
+     Dark applies them the game's way, white over the page. Light has no game value to apply
+     them to — Brotato never dims text on a light surface — so it is **derived**: the same two
+     alphas, black over the paper, warmed towards the cream they sit on. */
   --ink-muted: light-dark(#3a3a2e, #c6cbd1);
   --ink-faint: light-dark(#55554a, #a3a9b2);
 
-  /* Borders and dividers. The game outlines every panel in flat black —
-     `border_color = Color(0, 0, 0, 1)` in panel_style.tres — and that black outline is the
-     single most legible piece of the look, so it is used at full strength in both themes.
+  /* Borders and dividers, and the one place the game's own value cannot be taken twice.
+     `panel_style.tres` outlines every panel in flat black, `border_color = Color(0, 0, 0, 1)`
+     — which works because a Brotato panel is a black slab on a bright arena, so the outline
+     falls on the arena side. Here the panel is black on a dark page, and a black outline on
+     it scores 1.04:1: invisible, in the theme this file calls the game's own.
+     So each theme takes the game's answer for its own situation. Light keeps the black
+     outline, which is what it is for. Dark takes the other tool the game divides with, the
+     white separator sprite `res://resources/themes/separator/separator_white.png`, at the
+     0.42 white alpha `res://ui/menus/run/character_selection.tscn` dims chrome to,
+     composited over the page.
      `--rule-soft` is for the places a page needs a divider every few lines, such as table
-     rows, where the game's outline would fence the reader in. */
-  --rule: light-dark(#000000, #000000);
-  --rule-soft: light-dark(#c9bf82, #39414e);
+     rows, where a full-strength outline would fence the reader in: the same two colours at
+     the 0.2 alpha `base_theme.tres` uses to dim, over the page. */
+  --rule: light-dark(#000000, #7b7e83);
+  --rule-soft: light-dark(#c8c3a3, #494d54);
 
   /* Gold: the border `special_button_theme.tres` puts on the button that matters,
      Color(1, 0.843, 0). Straight from the game on dark. On paper it fails contrast against
@@ -142,8 +166,10 @@
   --good: light-dark(#1f6b2b, #8effa0);
   --bad: light-dark(#a32020, #ff7b7b);
 
-  /* The game draws no soft shadows; it draws a hard black edge. So this is an offset solid,
-     not a blur — the sticker edge a Brotato panel has. */
+  /* **Derived**, in the sense that the game has no shadow to read: nothing in
+     res://resources/themes/ blurs anything, because Godot's StyleBoxFlat has no shadow to
+     set and Brotato never reaches past it. What the game does instead is stack flat black
+     edges, so this is an offset solid rather than a blur — the sticker edge, not a lift. */
   --shadow: 0 3px 0 rgb(0 0 0 / 55%);
 
   --measure: 34rem;
@@ -213,12 +239,6 @@ body > footer {
   max-width: var(--measure);
   margin-inline: auto;
 }
-
-/* The one thing of the game's the page does not take is the black outline every
-   `font_*_outline.tres` puts round its type. The game needs it because its text sits on a
-   bright arena; here the text sits on a dark panel, where a black outline is invisible and
-   does nothing but erode the letterform it is meant to protect. The weight it was there to
-   buy is bought instead by the face itself, at 600 and 700. */
 
 /* ---------------------------------------------------------------- header */
 
@@ -628,8 +648,13 @@ th {
 
 @media print {
   /* Paper is white; ink is black. Screen theme is irrelevant to the printer, and so is the
-     game's: none of the palette above survives here. What does survive is the geometry —
-     a printed page still shows the game's panel shapes, in black on white. */
+     game's: none of the palette above survives here. What does survive is the shape — the
+     corner radii, the panel outlines, the pill of the patch stamp — so a printed lesson is
+     still recognisably the same page, in black on white.
+     The one measurement that changes is the border weight. 3px is chosen against a screen
+     pixel; on paper it is a third of a millimetre of solid toner around every panel on the
+     sheet, which is heavier than the screen ever looks. 1.5px prints at the weight 3px
+     displays at, which is the point of keeping it. */
   :root,
   :root[data-theme="dark"] {
     color-scheme: light;

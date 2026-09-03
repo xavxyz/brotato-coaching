@@ -44,12 +44,19 @@ TEXT_ON_SURFACE = [
 
 # Right and wrong in a quiz are drawn as borders, never as the only signal, so
 # they are held to the non-text threshold on the surfaces a question uses.
-# `--rule` is not here: a divider is decoration, and WCAG asks nothing of it.
 SIGNAL_ON_SURFACE = [
     (signal, surface)
     for signal in ("--good", "--bad")
     for surface in ("--bg-raised", "--accent-wash")
 ]
+
+# Every surface a panel outline is drawn against: the panel it encloses, and the
+# page it encloses it on. WCAG asks nothing of a divider, so this is not an
+# accessibility threshold — it is the panel treatment itself. The outline is the
+# most recognisable thing the look borrows, and it is the one part of it that can
+# be present in the file and absent on the screen, because a border that matches
+# what it borders still parses, still renders, and shows nothing.
+OUTLINED_SURFACES = ("--bg", "--bg-raised", "--bg-sunken", "--accent-wash")
 
 _PAIR = re.compile(
     r"^\s*(--[a-z-]+):\s*light-dark\(\s*(#[0-9a-fA-F]{6})\s*,\s*(#[0-9a-fA-F]{6})\s*\)",
@@ -64,9 +71,9 @@ def stylesheet() -> str:
 
 def print_block() -> str:
     """Everything inside the stylesheet's `@media print` rule."""
-    start = stylesheet().index("@media print")
-    depth, index = 0, start
     text = stylesheet()
+    start = text.index("@media print")
+    depth, index = 0, start
     while index < len(text):
         if text[index] == "{":
             depth += 1
@@ -78,14 +85,14 @@ def print_block() -> str:
     raise AssertionError("@media print is never closed")
 
 
-def palettes() -> tuple[dict[str, str], dict[str, str]]:
-    """The light and dark palettes, read off the `light-dark()` pairs."""
-    light, dark = {}, {}
+def palettes() -> dict[str, dict[str, str]]:
+    """Both palettes, keyed by theme, read off the `light-dark()` pairs."""
+    themes: dict[str, dict[str, str]] = {"light": {}, "dark": {}}
     for token, on_light, on_dark in _PAIR.findall(stylesheet()):
-        light[token] = on_light
-        dark[token] = on_dark
-    assert light, "no light-dark() palette found in lesson.css"
-    return light, dark
+        themes["light"][token] = on_light
+        themes["dark"][token] = on_dark
+    assert themes["light"], "no light-dark() palette found in lesson.css"
+    return themes
 
 
 def relative_luminance(colour: str) -> float:
@@ -106,7 +113,7 @@ def contrast(foreground: str, background: str) -> float:
     return (lighter + 0.05) / (darker + 0.05)
 
 
-THEMES = dict(zip(("light", "dark"), palettes()))
+THEMES = palettes()
 
 
 @pytest.mark.parametrize("theme", sorted(THEMES))
@@ -138,15 +145,30 @@ def test_a_border_that_carries_meaning_is_visible(
     )
 
 
+@pytest.mark.parametrize("theme", sorted(THEMES))
+@pytest.mark.parametrize("surface", OUTLINED_SURFACES)
+def test_a_panel_outline_is_visible_against_what_it_outlines(
+    theme: str, surface: str
+) -> None:
+    palette = THEMES[theme]
+    ratio = contrast(palette["--rule"], palette[surface])
+
+    assert ratio >= NON_TEXT_CONTRAST, (
+        f"{theme}: --rule {palette['--rule']} on {surface} {palette[surface]} "
+        f"is {ratio:.2f}:1 — an outline nobody can see is not a panel treatment"
+    )
+
+
 def test_printing_is_black_ink_on_white_paper() -> None:
     printed = dict(_PRINT_VALUE.findall(print_block()))
+    paper = "#ffffff"
 
-    assert printed.get("--bg") == "#ffffff", "paper is white"
     assert printed.get("--ink") == "#000000", "ink is black"
-    for token in ("--bg-raised", "--bg-sunken", "--accent-wash"):
-        assert printed.get(token) == "#ffffff", f"{token} is paper too"
+    for token in ("--bg", "--bg-raised", "--bg-sunken", "--accent-wash"):
+        assert printed.get(token) == paper, f"{token} is paper"
     for token in ("--ink-muted", "--ink-faint", "--accent"):
-        assert contrast(printed[token], "#ffffff") >= TEXT_CONTRAST, (
+        assert token in printed, f"printed {token} is never set back to an ink"
+        assert contrast(printed[token], paper) >= TEXT_CONTRAST, (
             f"printed {token} is too pale for paper"
         )
 
