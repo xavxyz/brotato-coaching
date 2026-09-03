@@ -15,9 +15,8 @@ import json
 import os
 import signal
 import subprocess
-import sys
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -126,15 +125,25 @@ class WatcherState:
         return session
 
 
-def start(state: WatcherState, environment: dict[str, str]) -> dict[str, Any]:
-    """Spawn a detached watcher and wait until it has claimed the session."""
+def start(
+    state: WatcherState,
+    command: Sequence[str],
+    environment: Mapping[str, str],
+) -> dict[str, Any]:
+    """Spawn `command` detached, and wait until it has claimed the session.
+
+    What to spawn, and what settings to spawn it with, are handed in: the child
+    is a fresh CLI process, and which command re-enters that CLI — and under
+    which environment variable names — is the app tier's knowledge, not this
+    package's. Here it is only "spawn this, wait for the handshake".
+    """
     if (live := state.running()) is not None:
         return {"started": False, "reason": "already-running", "pid": live["pid"]}
 
     state.log_path.parent.mkdir(parents=True, exist_ok=True)
     with state.log_path.open("a") as log:
         child = subprocess.Popen(
-            [sys.executable, "-m", "brotato_coaching", "watch"],
+            list(command),
             stdout=log,
             stderr=log,
             stdin=subprocess.DEVNULL,

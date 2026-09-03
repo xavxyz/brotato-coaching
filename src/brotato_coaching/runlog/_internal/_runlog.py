@@ -9,7 +9,7 @@ method in a loop; everything else reads back what it wrote.
 import os
 import signal
 import time
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +44,21 @@ class RunLog:
         self._poll_interval = poll_interval
         self._store = RunStore(runs_directory)
         self._watcher_state = _watcher.WatcherState(runs_directory)
+
+    @property
+    def runs_directory(self) -> Path:
+        """Where this `RunLog` is putting snapshots.
+
+        Readable because whoever relaunches this process as a detached watcher
+        has to pass the child the directory *this* one is filling, and reading
+        it back off here is what makes the two provably the same.
+        """
+        return self._runs_directory
+
+    @property
+    def poll_interval(self) -> float:
+        """How often this `RunLog` re-reads the live run state, in seconds."""
+        return self._poll_interval
 
     def capture_once(self, save_directory: Path) -> dict[str, Any]:
         """Decide, once and synchronously, whether to snapshot the live state.
@@ -119,8 +134,16 @@ class RunLog:
         """One run's snapshots, read back whole. Raises `UnknownRun`."""
         return self._store.snapshots(run_id)
 
-    def start_watcher(self) -> dict[str, Any]:
-        return _watcher.start(self._watcher_state, self._environment())
+    def start_watcher(
+        self, command: Sequence[str], environment: Mapping[str, str]
+    ) -> dict[str, Any]:
+        """Spawn `command`, with `environment` set, and wait for it to claim.
+
+        Both are handed in: the child is a fresh CLI process, and neither the
+        command that re-enters that CLI nor the variable names carrying its
+        settings are this package's to know.
+        """
+        return _watcher.start(self._watcher_state, command, environment)
 
     def stop_watcher(self) -> dict[str, Any]:
         return _watcher.stop(self._watcher_state)
@@ -164,20 +187,6 @@ class RunLog:
 
     def _nothing(self, reason: str, **details: Any) -> dict[str, Any]:
         return {"captured": False, "reason": reason, "run_id": None, **details}
-
-    def _environment(self) -> dict[str, str]:
-        """What a relaunched watcher needs that it cannot work out for itself.
-
-        Not the live state path: the child inherits this process's environment
-        and working directory, so it reaches the same directory by running the
-        same discovery rather than by being told the answer. These two are
-        app-tier settings with no other channel, and knowing their names here is
-        the one place this package reaches upwards.
-        """
-        return {
-            "BROTATO_RUNS_DIR": str(self._runs_directory),
-            "BROTATO_POLL_INTERVAL": str(self._poll_interval),
-        }
 
 
 class _Stopped(Exception):
